@@ -37,7 +37,6 @@ RUN curl -s -O https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.ex
     && cat kp3.reg >> /root/.wine/user.reg && rm *.exe
 
 # calibre and its plugins are
-WORKDIR /app
 # KFX Output 272407
 # KFX Input 291290
 RUN curl -s https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin \
