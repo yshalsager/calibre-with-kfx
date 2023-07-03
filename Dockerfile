@@ -1,6 +1,8 @@
 # Use python:3.11-slim-bullseye as base image to have a smaller image and avoid installing python manually
 FROM python:3.11-slim-bullseye
 
+LABEL name="calibre-with-kfx" maintainer="yshalsager <contact@yshalsager.com>"
+
 # Configure Paths
 RUN export PATH=$PATH
 
