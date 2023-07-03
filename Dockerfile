@@ -2,6 +2,7 @@
 FROM python:3.11-slim-bullseye
 
 LABEL name="calibre-with-kfx" maintainer="yshalsager <contact@yshalsager.com>"
+LABEL org.opencontainers.image.description "An image for running Calibre with KFX support to allow conversion of KFX files to other formats."
 
 # Configure Paths
 RUN export PATH=$PATH
