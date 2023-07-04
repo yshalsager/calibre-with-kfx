@@ -1,0 +1,27 @@
+name: Test converting
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: "Image Tag"
+        required: true
+        type: string
+  registry_package:
+    types: [published, updated]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test
+        run: |
+          image=ghcr.io/${{ github.repository }}:${{ github.event.registry_package.package_version.tag_name || github.event.inputs.tags }}
+          docker pull $image
+          curl -s -L -O "https://github.com/IDPF/epub3-samples/releases/download/20170606/trees.epub"
+          echo "Running test script..."
+          docker run --rm -v "$(pwd):/app:rw" --user 0:0 -e QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox" --entrypoint="bash" $image -c "./test.sh trees.epub"

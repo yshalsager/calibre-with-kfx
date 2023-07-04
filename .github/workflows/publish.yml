@@ -45,7 +45,27 @@ jobs:
         run: |
           echo "description=Using $(jq -r 'to_entries|map("\(.key): \(.value)")|.[]|@sh' versions.json | tr -d $'\n')" >> $GITHUB_OUTPUT
 
-      - name: Build and push Docker images
+      - name: Build Docker images
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: |
+            ${{ github.repository }}:latest
+            ${{ github.repository }}:${{ steps.get-latest-release.outputs.release }}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.get-latest-release.outputs.release }}
+          labels: |
+            org.opencontainers.image.description=${{ steps.tag.outputs.description }}
+
+      - name: Test
+        run: |
+          curl -s -L -O "https://github.com/IDPF/epub3-samples/releases/download/20170606/trees.epub"
+          echo "Running test script..."
+          docker run --rm -v "$(pwd):/app:rw" --user 0:0 -e QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox" --entrypoint="bash" ${{ github.repository }}:latest -c "./test.sh trees.epub"
+
+      - name: Push Docker images
         uses: docker/build-push-action@v4
         with:
           context: .
