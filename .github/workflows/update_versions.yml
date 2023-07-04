@@ -1,0 +1,50 @@
+name: Update versions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+          token: ${{ secrets.PAT }}
+      - name: Set up Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Run
+        id: run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 update_versions.py
+          git add versions.json
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git commit -m "chore: bump versions $(date +%Y-%m-%d)"
+          if [ $(($(date +%s) - $(stat -c %Y versions.json))) -lt 60 ]; then
+            git tag $(date +%Y-%m-%d)
+            git push origin master --tags
+            echo "Built using:\n\n$(jq -r 'to_entries | map("- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
+            echo "release=true" >> $GITHUB_OUTPUT
+            echo "version=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          else
+            echo "Nothing changed"
+            echo "release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Release
+        if: ${{ steps.run.outputs.release }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.run.outputs.version }}
+          name: ${{ steps.run.outputs.version }}
+          body_path: notes.txt
