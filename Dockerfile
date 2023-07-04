@@ -1,26 +1,24 @@
-# Use python:3.11-slim-bullseye as base image to have a smaller image and avoid installing python manually
-FROM python:3.11-slim-bullseye
+FROM python:3.11-slim-bookworm
 
 LABEL name="calibre-with-kfx" maintainer="yshalsager <contact@yshalsager.com>"
 LABEL org.opencontainers.image.description "An image for running Calibre with KFX support to allow conversion of KFX files to other formats."
 
-# Configure Paths
-RUN export PATH=$PATH
-
 # Install prerequisites
-RUN apt-get update && \
-    DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+RUN apt update && \
+    apt install -y --no-install-recommends \
+                  # Calibre deps
                   ca-certificates \
+                  curl \
+                  gnupg2 \
+                  xz-utils \
+                  # QTWebEngine deps
+                  libxdamage-dev libxrandr-dev libxtst6 \
+                  # for kindle support
                   xvfb \
                   libegl1 \
                   libopengl0 \
                   libxkbcommon-x11-0 \
                   libxcomposite-dev \
-                  # QTWebEngine deps
-                  libxdamage-dev libxrandr-dev libxtst6 \
-                  curl \
-                  gnupg2 \
-                  xz-utils \
                   && rm -rf /var/lib/apt/lists/*
 
 # Install wine
@@ -28,13 +26,14 @@ ARG WINE_BRANCH="stable"
 RUN dpkg --add-architecture i386 \
     && mkdir -pm755 /etc/apt/keyrings \
     && curl -o /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key \
-    && curl -L -o /etc/apt/sources.list.d/winehq-bullseye.sources https://dl.winehq.org/wine-builds/debian/dists/bullseye/winehq-bullseye.sources \
-    && apt-get update \
-    && DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends winbind winehq-${WINE_BRANCH} \
+    && curl -L -o /etc/apt/sources.list.d/winehq-bookworm.sources https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources \
+    && apt update \
+    && apt install -y --no-install-recommends winbind winehq-${WINE_BRANCH} \
     && rm -rf /var/lib/apt/lists/*
 
 # Kindle support
-COPY kp3.reg .
+WORKDIR /app
+COPY kp3.reg /app
 RUN curl -s -O https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
     && DISPLAY=:0 WINEARCH=win64 WINEDEBUG=-all wine KindlePreviewerInstaller.exe /S \
     && cat kp3.reg >> /root/.wine/user.reg && rm *.exe
@@ -48,3 +47,5 @@ RUN curl -s https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdi
     && curl -s -O https://plugins.calibre-ebook.com/291290.zip \
     && calibre-customize -a 291290.zip \
     && rm *.zip
+
+ENTRYPOINT ["entrypoint.sh"]

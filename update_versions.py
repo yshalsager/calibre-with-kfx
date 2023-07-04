@@ -12,7 +12,7 @@ KINDLE_PREVIEWER_URL = (
     "https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe"
 )
 WINE_REPO_URL = (
-    "https://dl.winehq.org/wine-builds/debian/dists/bullseye/main/binary-amd64/"
+    "https://dl.winehq.org/wine-builds/debian/dists/bookworm/main/binary-amd64/"
 )
 
 
