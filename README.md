@@ -32,7 +32,7 @@ docker pull yshalsager/calibre-with-kfx
 Once you have the Docker image, you can run it using the following command:
 
 ```bash
-docker run -it --rm -v /path/to/local/folder:/data yshalsager/calibre-with-kfx [input_file] [output_file] [extra args]
+docker run --rm -it -v "/path/to/local/folder:/app:rw" yshalsager/calibre-with-kfx [input_file] [output_file] [extra args]
 ```
 
 ### Examples:
