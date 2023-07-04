@@ -26,23 +26,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 update_versions.py
+          echo $(cat versions.json)
           git add versions.json
-          if [ $? -ne 0 ]; then
+          if git diff --cached --exit-code; then
+            echo "Nothing changed"
+            echo "release=false" >> $GITHUB_OUTPUT
+          else
             git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git config --global user.name "github-actions[bot]"
-            git commit -m "chore: bump versions $(date +%Y-%m-%d)"
-            git tag $(date +%Y-%m-%d)
+            version=$(date +'%Y%m%d-%H%M')
+            git commit -m "chore: bump versions $version"
+            git tag $version
             git push origin master --tags
             echo "Built using: $(jq -r 'to_entries | map("\n- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
             echo "release=true" >> $GITHUB_OUTPUT
-            echo "version=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
-          else
-            echo "Nothing changed"
-            echo "release=false" >> $GITHUB_OUTPUT
+            echo "version=$version" >> $GITHUB_OUTPUT
           fi
 
       - name: Release
-        if: ${{ steps.run.outputs.release }}
+        if: ${{ steps.run.outputs.release == 'true' }}
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.run.outputs.version }}

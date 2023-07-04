@@ -2,13 +2,17 @@ name: Publish Docker image
 
 on:
   workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    paths:
+      - "versions.json"
+    branches:
+      - master
 
 jobs:
   push_to_registry:
-    name: Push Docker image to multiple registries
+    name: Push Docker image to docker hub
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, ' bump versions ') || github.event_name == 'workflow_dispatch' }}
 
     permissions:
       packages: write
@@ -23,10 +27,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Get latest release tag name
+        uses: pozetroninc/github-action-get-latest-release@v0.7.0
+        id: get-latest-release
+        with:
+          repository: ${{ github.repository }}
+
       - name: Set image tag and description
         id: tag
         run: |
-          echo "version=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
           echo "description=Using $(jq -r 'to_entries|map("\(.key): \(.value)")|.[]|@sh' versions.json | tr -d $'\n')" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker images
@@ -35,6 +44,6 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ github.repository }}:${{ steps.tag.outputs.version }}, ${{ github.repository }}:latest
+          tags: ${{ github.repository }}:${{ steps.get-latest-release.outputs.release }}, ${{ github.repository }}:latest
           labels: |
             org.opencontainers.image.description=${{ steps.tag.outputs.description }}
