@@ -46,7 +46,8 @@ ARG USERNAME=calibre
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && mkdir /app && chown -R $USERNAME:$USERNAME /app
 USER calibre
 
 # Kindle support
@@ -58,5 +59,4 @@ RUN cd /home/$USERNAME/ && curl -s -O https://d2bzeorukaqrvt.cloudfront.net/Kind
 COPY entrypoint.sh /sbin/entrypoint.sh
 ENTRYPOINT ["/sbin/entrypoint.sh"]
 
-RUN mkdir /app && chown -R $USERNAME:$USERNAME /app
 WORKDIR /app
