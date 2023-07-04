@@ -48,5 +48,5 @@ RUN curl -s https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdi
     && calibre-customize -a 291290.zip \
     && rm *.zip
 
-COPY entrypoint.sh /app
-ENTRYPOINT ["/app/entrypoint.sh"]
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
