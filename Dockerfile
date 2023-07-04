@@ -31,12 +31,18 @@ RUN dpkg --add-architecture i386 \
     && apt install -y --no-install-recommends winbind winehq-${WINE_BRANCH} \
     && rm -rf /var/lib/apt/lists/*
 
+# non-root user
+ARG USERNAME=calibre
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+RUN groupadd --gid $USER_GID $USERNAME && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+USER calibre
+
 # Kindle support
-WORKDIR /app
-COPY kp3.reg /app
+COPY --chown=calibre:calibre kp3.reg /home/calibre/kp3.reg
 RUN curl -s -O https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
     && DISPLAY=:0 WINEARCH=win64 WINEDEBUG=-all wine KindlePreviewerInstaller.exe /S \
-    && cat kp3.reg >> /root/.wine/user.reg && rm *.exe
+    && cat kp3.reg >> ~/.wine/user.reg && rm *.exe && rm kp3.reg
 
 # calibre and its plugins are
 # KFX Output 272407
@@ -48,5 +54,5 @@ RUN curl -s https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdi
     && calibre-customize -a 291290.zip \
     && rm *.zip
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-ENTRYPOINT ["entrypoint.sh"]
+COPY entrypoint.sh /sbin/entrypoint.sh
+ENTRYPOINT ["/sbin/entrypoint.sh"]
