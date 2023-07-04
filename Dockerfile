@@ -40,9 +40,9 @@ USER calibre
 
 # Kindle support
 COPY --chown=calibre:calibre kp3.reg /home/calibre/kp3.reg
-RUN curl -s -O https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
+RUN cd /home/calibre/ && curl -s -O https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
     && DISPLAY=:0 WINEARCH=win64 WINEDEBUG=-all wine KindlePreviewerInstaller.exe /S \
-    && cat kp3.reg >> ~/.wine/user.reg && rm *.exe && rm kp3.reg
+    && cat kp3.reg >> /home/calibre/.wine/user.reg && rm *.exe && rm kp3.reg
 
 # calibre and its plugins are
 # KFX Output 272407
