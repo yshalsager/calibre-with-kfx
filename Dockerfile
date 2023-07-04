@@ -35,14 +35,16 @@ RUN dpkg --add-architecture i386 \
 ARG USERNAME=calibre
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-RUN groupadd --gid $USER_GID $USERNAME && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    && chown -R $USERNAME:$USERNAME /opt
 USER calibre
 
 # Kindle support
-COPY --chown=calibre:calibre kp3.reg /home/calibre/kp3.reg
-RUN cd /home/calibre/ && curl -s -O https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
+COPY --chown=$USERNAME:$USERNAME kp3.reg /home/$USERNAME/kp3.reg
+RUN cd /home/$USERNAME/ && curl -s -O https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
     && DISPLAY=:0 WINEARCH=win64 WINEDEBUG=-all wine KindlePreviewerInstaller.exe /S \
-    && cat kp3.reg >> /home/calibre/.wine/user.reg && rm *.exe && rm kp3.reg
+    && cat kp3.reg >> /home/$USERNAME/.wine/user.reg && rm *.exe && rm kp3.reg
 
 # calibre and its plugins are
 # KFX Output 272407
