@@ -1,4 +1,5 @@
 {
+    "base": "python:3.11-slim-bullseye",
     "calibre": "v6.22.0",
     "kfx_input": "2.1.0",
     "kfx_output": "2.0.0",

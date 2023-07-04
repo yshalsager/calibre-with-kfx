@@ -2,6 +2,7 @@ import json
 import re
 
 from datetime import datetime
+from pathlib import Path
 from urllib.request import Request, urlopen
 
 CALIBRE_REPO = "kovidgoyal/calibre"
@@ -35,6 +36,7 @@ def convert_date(date_str):
 
 
 def main():
+    base = re.search(r"FROM (.*)", Path("Dockerfile").read_text()).group(1)
     calibre = get_json(f"https://api.github.com/repos/{CALIBRE_REPO}/releases")[0][
         "tag_name"
     ]
@@ -55,10 +57,11 @@ def main():
         get_page(WINE_REPO_URL),
         re.M,
     ).pop()
-    if not all([calibre, kfx_input, kfx_output, kindle_previewer, wine]):
+    if not all([base, calibre, kfx_input, kfx_output, kindle_previewer, wine]):
         exit()
     return json.dumps(
         {
+            "base": base,
             "calibre": calibre,
             "kfx_input": kfx_input,
             "kfx_output": kfx_output,
@@ -70,6 +73,5 @@ def main():
 
 
 if __name__ == "__main__":
-    from pathlib import Path
 
     Path("versions.json").write_text(main())
