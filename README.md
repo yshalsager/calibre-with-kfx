@@ -30,8 +30,8 @@ docker run -it --rm -v /path/to/local/folder:/data yshalsager/calibre-with-kfx [
 
 ### Examples:
 
-- Convert to azw3 with extra arguments: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx -i epub30-spec.epub -o epub30-spec.azw3 --dont-compress`
-- Convert to KFX: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx -i epub30-spec.epub -o epub30-spec.kfx`
+- Convert to azw3 with extra arguments: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx epub30-spec.epub epub30-spec.azw3 --dont-compress`
+- Convert to KFX: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx epub30-spec.epub epub30-spec.kfx`
 
 ## Versioning
 
