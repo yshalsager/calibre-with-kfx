@@ -33,7 +33,7 @@ jobs:
           if [ $(($(date +%s) - $(stat -c %Y versions.json))) -lt 60 ]; then
             git tag $(date +%Y-%m-%d)
             git push origin master --tags
-            echo "Built using:\n\n$(jq -r 'to_entries | map("- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
+            echo "Built using: $(jq -r 'to_entries | map("\n- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
             echo "release=true" >> $GITHUB_OUTPUT
             echo "version=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
           else
