@@ -63,7 +63,8 @@ jobs:
         run: |
           curl -s -L -O "https://github.com/IDPF/epub3-samples/releases/download/20170606/trees.epub"
           echo "Running test script..."
-          docker run --rm -v "$(pwd):/app:rw" --user 0:0 -e QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox" --entrypoint="bash" ${{ github.repository }}:latest -c "./test.sh trees.epub"
+          sudo chown 1000:1000 .
+          docker run --rm -v "$(pwd):/app:rw" --entrypoint="bash" ${{ github.repository }}:latest -c "./test.sh trees.epub"
 
       - name: Push Docker images
         uses: docker/build-push-action@v4
