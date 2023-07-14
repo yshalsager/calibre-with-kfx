@@ -43,7 +43,7 @@ jobs:
       - name: Set image tag and description
         id: tag
         run: |
-          echo "description=Using $(jq -r 'to_entries|map("\(.key): \(.value)")|.[]|@sh' versions.json | tr -d $'\n')" >> $GITHUB_OUTPUT
+          echo "description=Using $(jq -r 'to_entries | map("\(.key): \(.value)") | join(" - ")' versions.json)" >> $GITHUB_OUTPUT
 
       - name: Build Docker images
         uses: docker/build-push-action@v4
