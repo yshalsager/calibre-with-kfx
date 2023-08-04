@@ -38,7 +38,7 @@ jobs:
             git commit -m "chore: bump versions $version"
             git tag $version
             git push origin master --tags
-            echo "[ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:$version](https://ghcr.io/${{ github.repository_owner }}/${{ github.repository }})\nBuilt using: $(jq -r 'to_entries | map("\n- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
+            echo "[ghcr.io/${{ github.repository }}:$version](https://ghcr.io/${{ github.repository }}) Built using: $(jq -r 'to_entries | map("\n- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
             echo "release=true" >> $GITHUB_OUTPUT
             echo "version=$version" >> $GITHUB_OUTPUT
           fi
