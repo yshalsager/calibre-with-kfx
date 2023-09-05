@@ -17,7 +17,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Test
         run: |
           image=ghcr.io/${{ github.repository }}:${{ github.event.registry_package.package_version.tag_name || github.event.inputs.tags }}
