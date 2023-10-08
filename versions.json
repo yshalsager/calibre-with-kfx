@@ -1,5 +1,5 @@
 {
-    "base": "python:3.11-slim-bookworm",
+    "base": "python:3.12-slim-bookworm",
     "calibre": "v6.28.1",
     "kfx_input": "2.5.0",
     "kfx_output": "2.3.1",
