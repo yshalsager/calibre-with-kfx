@@ -19,6 +19,8 @@ RUN apt update && \
                   libopengl0 \
                   libxkbcommon-x11-0 \
                   libxcomposite-dev \
+                  # calibre 7
+                  libxcb-cursor0 \
                   && rm -rf /var/lib/apt/lists/*
 
 # Install wine
