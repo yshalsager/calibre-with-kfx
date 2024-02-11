@@ -1,8 +1,8 @@
 {
     "base": "python:3.12-slim-bookworm",
-    "calibre": "v7.4.0",
+    "calibre": "v7.5.1",
     "kfx_input": "2.8.1",
     "kfx_output": "2.6.1",
-    "kindle_previewer": "2024-01-31",
+    "kindle_previewer": "2024-02-09",
     "wine": "9.0.0.0~bookworm-1"
 }
