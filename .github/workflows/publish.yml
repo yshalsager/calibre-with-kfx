@@ -46,7 +46,7 @@ jobs:
           echo "description=Using $(jq -r 'to_entries | map("\(.key): \(.value)") | join(" - ")' versions.json)" >> $GITHUB_OUTPUT
 
       - name: Build Docker images
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -67,7 +67,7 @@ jobs:
           docker run --rm -v "$(pwd):/app:rw" --entrypoint="bash" ${{ github.repository }}:latest -c "./test.sh trees.epub"
 
       - name: Push Docker images
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
