@@ -9,8 +9,8 @@ for ext in azw3 docx mobi pdf txt; do
 done
 
 echo "Converting to KFX"
-calibre-debug -r "KFX Output" -- $epub_file
-calibre-debug -r "KFX Input" -- "${epub_file%.epub}.kfx" "c-${epub_file%.epub}.kfx"
+WINEDEBUG=+all calibre-debug -r "KFX Output" -- $epub_file
+WINEDEBUG=+all calibre-debug -r "KFX Input" -- "${epub_file%.epub}.kfx" "c-${epub_file%.epub}.kfx"
 
 
 # docker run --rm -v "$(pwd):/app:rw" --entrypoint="bash" yshalsager/calibre-with-kfx -c "./test.sh trees.epub"
