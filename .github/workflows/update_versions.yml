@@ -19,7 +19,7 @@ jobs:
       - name: Set up Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: 3.13
       - name: Run
         id: run
         env:
@@ -36,17 +36,8 @@ jobs:
             git config --global user.name "github-actions[bot]"
             version=$(date +'%Y%m%d-%H%M')
             git commit -m "chore: bump versions $version"
-            git tag $version
-            git push origin master --tags
+            git push origin master
             echo "[ghcr.io/${{ github.repository }}:$version](https://ghcr.io/${{ github.repository }}) Built using: $(jq -r 'to_entries | map("\n- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
             echo "release=true" >> $GITHUB_OUTPUT
             echo "version=$version" >> $GITHUB_OUTPUT
           fi
-
-      - name: Release
-        if: ${{ steps.run.outputs.release == 'true' }}
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.run.outputs.version }}
-          name: ${{ steps.run.outputs.version }}
-          body_path: notes.txt
