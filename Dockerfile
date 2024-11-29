@@ -6,22 +6,22 @@ LABEL org.opencontainers.image.description "An image for running Calibre with KF
 # Install prerequisites
 RUN apt update && \
     apt install -y --no-install-recommends \
-                  # Calibre deps
-                  ca-certificates \
-                  curl \
-                  gnupg2 \
-                  xz-utils \
-                  # QTWebEngine deps
-                  libxdamage-dev libxrandr-dev libxtst6 \
-                  # for kindle support
-                  xvfb \
-                  libegl1 \
-                  libopengl0 \
-                  libxkbcommon-x11-0 \
-                  libxcomposite-dev \
-                  # calibre 7
-                  libxcb-cursor0 \
-                  && rm -rf /var/lib/apt/lists/*
+    # Calibre deps
+    ca-certificates \
+    curl \
+    gnupg2 \
+    xz-utils \
+    # QTWebEngine deps
+    libxdamage-dev libxrandr-dev libxtst6 \
+    # for kindle support
+    xvfb \
+    libegl1 \
+    libopengl0 \
+    libxkbcommon-x11-0 \
+    libxcomposite-dev \
+    # calibre 7
+    libxcb-cursor0 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install wine
 ARG WINE_BRANCH="stable"
