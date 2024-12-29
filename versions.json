@@ -1,7 +1,7 @@
 {
     "base": "python:3.13-slim-bookworm",
     "calibre": "v7.23.0",
-    "kfx_input": "2.18.0",
+    "kfx_input": "2.19.0",
     "kfx_output": "2.13.0",
     "kindle_previewer": "2024-11-20",
     "wine": "9.0.0.0~bookworm-1"
