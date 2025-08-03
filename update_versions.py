@@ -1,5 +1,6 @@
 import json
 import re
+import gzip
 
 from datetime import datetime
 from pathlib import Path
@@ -11,9 +12,7 @@ CALIBRE_PLUGIN_VERSION_PATTERN = r"[\s\S]+?<li>Version: <b>([\d\w.]+)</b></li>"
 KINDLE_PREVIEWER_URL = (
     "https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe"
 )
-WINE_REPO_URL = (
-    "https://dl.winehq.org/wine-builds/debian/dists/bookworm/main/binary-amd64/"
-)
+WINE_REPO_URL = "https://dl.winehq.org/wine-builds/debian/dists/"
 
 
 def get_headers(url):
@@ -29,6 +28,11 @@ def get_page(url):
 def get_json(url):
     with urlopen(url) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def get_file(url):
+    with urlopen(url) as response:
+        return response.read()
 
 
 def convert_date(date_str):
@@ -53,10 +57,14 @@ def main():
     ).group(1)
     kindle_previewer = convert_date(get_headers(KINDLE_PREVIEWER_URL)["last-modified"])
     wine = re.findall(
-        r"winehq-stable_(.*?)_amd64\.deb",
-        get_page(WINE_REPO_URL),
+        r"Package: wine-stable[\s\S]+?Version: (.*)\n",
+        gzip.decompress(
+            get_file(
+                f"{WINE_REPO_URL}{base.split('-')[-1]}/main/binary-amd64/Packages.gz"
+            )
+        ).decode("utf-8"),
         re.M,
-    ).pop()
+    ).pop(0)
     if not all([base, calibre, kfx_input, kfx_output, kindle_previewer, wine]):
         exit()
     return json.dumps(
