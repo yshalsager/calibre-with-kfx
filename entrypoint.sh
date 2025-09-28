@@ -45,7 +45,7 @@ output_extension="${output_file##*.}"
 function convert_file {
     shift 2
     if [[ "$output_extension" == "kfx" ]]; then
-        calibre-debug -r "KFX Output" -- "$input_file" "$@"
+        DISPLAY=:0 WINEARCH=win64 calibre-debug -r "KFX Output" -- "$input_file" "$@"
     else
         ebook-convert "$input_file" "$output_file" "$@"
     fi
