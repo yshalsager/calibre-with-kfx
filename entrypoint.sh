@@ -1,6 +1,14 @@
 #!/bin/bash
 set -e
 
+# Ensure a runtime dir exists for Xvfb/xauth when running headless
+if [[ -z "${XDG_RUNTIME_DIR:-}" ]]; then
+    XDG_RUNTIME_DIR="/run/user/$(id -u)"
+fi
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+export XDG_RUNTIME_DIR
+
 # Print help message
 function print_usage {
     echo "Usage: $0 [INPUT_FILE] [OUTPUT_FILE] [OPTIONS]"
@@ -41,11 +49,28 @@ fi
 # Determine output file extension
 output_extension="${output_file##*.}"
 
+function run_with_xvfb {
+    local display=":${XVFB_DISPLAY:-99}"
+    local screen="${XVFB_SCREEN:-1280x720x24}"
+    Xvfb "$display" -screen 0 "$screen" -nolisten tcp -ac &
+    local xvfb_pid=$!
+    trap "kill -TERM ${xvfb_pid} 2>/dev/null || true" EXIT
+    # Give Xvfb a moment to initialize
+    sleep 2
+    export DISPLAY="$display"
+    "$@"
+    local status=$?
+    kill -TERM $xvfb_pid 2>/dev/null || true
+    wait $xvfb_pid 2>/dev/null || true
+    trap - EXIT
+    return $status
+}
+
 # Convert input file to output file
 function convert_file {
     shift 2
     if [[ "$output_extension" == "kfx" ]]; then
-        DISPLAY=:0 WINEARCH=win64 calibre-debug -r "KFX Output" -- "$input_file" "$@"
+        run_with_xvfb calibre-debug -r "KFX Output" -- "$input_file" "$@"
     else
         ebook-convert "$input_file" "$output_file" "$@"
     fi
