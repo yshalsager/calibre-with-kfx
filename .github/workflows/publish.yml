@@ -45,7 +45,16 @@ jobs:
       - name: Set image tag and description
         id: tag
         run: |
-          echo "description=Using $(jq -r 'to_entries | map("\(.key): \(.value)") | join(" - ")' versions.json)" >> $GITHUB_OUTPUT
+          versions_single=$(jq -r 'to_entries | map("\(.key): \(.value)") | join(" - ")' versions.json)
+          versions_multiline=$(jq -r 'to_entries | map("- \(.key): \(.value)") | join("\n")' versions.json)
+          repo='${{ github.repository }}'
+          version='${{ steps.get-version.outputs.version }}'
+          echo "description=Using $versions_single" >> "$GITHUB_OUTPUT"
+          {
+            echo "release_body<<EOF"
+            printf '[ghcr.io/%s:%s](https://ghcr.io/%s) Built using:\n%s\n' "$repo" "$version" "$repo" "$versions_multiline"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build Docker images
         uses: docker/build-push-action@v6
@@ -80,8 +89,7 @@ jobs:
         with:
           tag_name: ${{ steps.get-version.outputs.version }}
           name: ${{ steps.get-version.outputs.version }}
-          body: |
-            [ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version }}](https://ghcr.io/${{ github.repository }}) Built using: $(jq -r 'to_entries | map("\n- \(.key): \(.value)") | .[]' versions.json)
+          body: ${{ steps.tag.outputs.release_body }}
 
       - name: Push Docker images
         if: success()
