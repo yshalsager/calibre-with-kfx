@@ -1,8 +1,8 @@
 {
     "base": "python:3.14-slim-trixie",
-    "calibre": "v9.1.0",
+    "calibre": "v9.2.1",
     "kfx_input": "2.29.0",
     "kfx_output": "2.18.0",
-    "kindle_previewer": "2025-12-11",
+    "kindle_previewer": "2026-02-05",
     "wine": "11.0.0.0~trixie-1"
 }
