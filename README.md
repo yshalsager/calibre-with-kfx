@@ -50,6 +50,26 @@ When converting to KFX, extra args are passed to the KFX Output plugin (`calibre
 - `--quality` include Kindle Previewer quality report
 - `--timeout` stop conversions lasting over ~15 minutes
 
+When converting from KFX to other formats, this image uses `ebook-convert` normally. Any `ebook-convert` CLI options can be passed as extra args.
+
+The KFX Input plugin also provides a separate CLI (useful for print replica PDF extraction, CBZ creation, resource unpacking, etc):
+
+```bash
+docker run --rm -it -v "$(pwd):/app:rw" --entrypoint calibre-debug yshalsager/calibre-with-kfx \
+  -r "KFX Input" -- /app/book.kfx --help
+```
+
+Common KFX Input CLI flags:
+
+- `--epub` (default), `--epub2`
+- `--pdf` extract/produce PDF (print replica, comics/children's)
+- `--cbz` create CBZ (print replica, comics/children's)
+- `--unpack` extract resources to a ZIP
+- `--json-content` create JSON content/position file
+- `--cover` force a generic EPUB cover if missing
+
+KFX Input has one calibre "Convert Books" option: `allow_conversion_with_errors` (default off). It also has plugin preferences used by its CLI/From-KFX UI (for example splitting landscape comic images when creating PDF).
+
 ## Versioning
 
 The docker image versions are tagged with build date and time. There's a [GitHub release](https://github.com/yshalsager/calibre-with-kfx/releases) for each tag that lists versions of each component of the image, like base OS, Calibre and its plugins, and Kindle Previewer.
