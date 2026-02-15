@@ -39,6 +39,16 @@ docker run --rm -it -v "/path/to/local/folder:/app:rw" yshalsager/calibre-with-k
 
 - Convert to azw3 with extra arguments: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx epub30-spec.epub epub30-spec.azw3 --dont-compress`
 - Convert to KFX: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx epub30-spec.epub epub30-spec.kfx`
+- Convert to KFX with approximate page numbers (auto): `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx book.epub book.kfx --pages 0`
+
+When converting to KFX, extra args are passed to the KFX Output plugin (`calibre-debug -r "KFX Output" -- ...`). Useful flags include:
+
+- `--pages N` create approximate page numbers if missing (`0` = auto)
+- `--book` mark as EBOK (vs default PDOC)
+- `--asin BXXXXXXXXX` set an ASIN
+- `--logs` include Kindle Previewer conversion logs
+- `--quality` include Kindle Previewer quality report
+- `--timeout` stop conversions lasting over ~15 minutes
 
 ## Versioning
 

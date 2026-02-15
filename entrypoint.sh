@@ -70,7 +70,8 @@ function run_with_xvfb {
 function convert_file {
     shift 2
     if [[ "$output_extension" == "kfx" ]]; then
-        run_with_xvfb calibre-debug -r "KFX Output" -- "$input_file" "$@"
+        # KFX Output's CLI accepts: infile [outfile] plus flags like --pages/--book/etc.
+        run_with_xvfb calibre-debug -r "KFX Output" -- "$input_file" "$output_file" "$@"
     else
         ebook-convert "$input_file" "$output_file" "$@"
     fi
