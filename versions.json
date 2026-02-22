@@ -1,6 +1,6 @@
 {
     "base": "python:3.14-slim-trixie",
-    "calibre": "v9.3.0",
+    "calibre": "v9.3.1",
     "kfx_input": "2.29.0",
     "kfx_output": "2.18.0",
     "kindle_previewer": "2026-02-05",
