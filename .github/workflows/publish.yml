@@ -57,7 +57,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Build Docker images
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -93,7 +93,7 @@ jobs:
 
       - name: Push Docker images
         if: success()
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
