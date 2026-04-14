@@ -2,12 +2,30 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    "group:allNonMajor"
+    ":rebaseStalePrs",
+    "group:allNonMajor",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests"
   ],
+  "timezone": "Africa/Cairo",
+  "schedule": [
+    "before 5am on saturday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "schedule": [
+      "before 5am on saturday"
+    ]
+  },
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
+      "automerge": true,
+      "minimumReleaseAge": "3 days"
     }
   ]
 }
