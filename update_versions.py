@@ -9,13 +9,13 @@ from urllib.request import Request, urlopen
 CALIBRE_REPO = "kovidgoyal/calibre"
 CALIBRE_PLUGINS_REPO_URL = "https://plugins.calibre-ebook.com/"
 CALIBRE_PLUGIN_VERSION_PATTERN = r"[\s\S]+?<li>Version: <b>([\d\w.]+)</b></li>"
-KINDLE_PREVIEWER_AMAZON_URL = (
-    "https://www.amazon.com/Kindle-Previewer/b?node=21381691011"
+KINDLE_PREVIEWER_RELEASE_NOTES_URL = (
+    "https://s3.amazonaws.com/kindlepreviewer/UG_ReleaseNotes_EN.txt"
 )
 KINDLE_PREVIEWER_URL = (
     "https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe"
 )
-KINDLE_PREVIEWER_VERSION_PATTERN = r"Kindle Previewer (\d+?\.\d+?.\d+?)"
+KINDLE_PREVIEWER_VERSION_PATTERN = r"New in Kindle Previewer (\d+(?:\.\d+){2,}):"
 WINE_REPO_URL = "https://dl.winehq.org/wine-builds/debian/dists/"
 
 
@@ -45,6 +45,17 @@ def get_file(url):
         return response.read()
 
 
+def get_kindle_previewer_version():
+    try:
+        page = get_page(KINDLE_PREVIEWER_RELEASE_NOTES_URL)
+    except Exception:
+        return None
+
+    if version_match := re.search(KINDLE_PREVIEWER_VERSION_PATTERN, page, re.I):
+        return version_match.group(1)
+    return None
+
+
 def convert_date(date_str):
     return str(datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %Z")).split(" ")[0]
 
@@ -71,14 +82,8 @@ def main():
         calibre_plugins_page,
         re.M,
     ).group(1)
-    # Try to get version from Amazon page
-    kindle_previewer_version = None
-    try:
-        amazon_page = get_page(KINDLE_PREVIEWER_AMAZON_URL)
-        if version_match := re.search(KINDLE_PREVIEWER_VERSION_PATTERN, amazon_page):
-            kindle_previewer_version = version_match.group(1)
-    except Exception:
-        pass
+    # Try to get version from release notes
+    kindle_previewer_version = get_kindle_previewer_version()
 
     # Get installer date
     kindle_previewer_date = convert_date(
