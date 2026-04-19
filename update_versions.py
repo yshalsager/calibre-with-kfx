@@ -51,8 +51,12 @@ def convert_date(date_str):
 
 def main():
     base = (
-        re.search(r"FROM (.*)", Path("Dockerfile").read_text()).group(1).split("/")[-1]
+        re.search(r"^FROM\s+([^\s]+)", Path("Dockerfile").read_text(), re.M)
+        .group(1)
+        .split("/")[-1]
+        .split("@")[0]
     )
+    debian_distribution = base.split("-")[-1]
     calibre = get_json(f"https://api.github.com/repos/{CALIBRE_REPO}/releases")[0][
         "tag_name"
     ]
@@ -84,7 +88,7 @@ def main():
         r"Package: wine-stable[\s\S]+?Version: (.*)\n",
         gzip.decompress(
             get_file(
-                f"{WINE_REPO_URL}{base.split('-')[-1]}/main/binary-amd64/Packages.gz"
+                f"{WINE_REPO_URL}{debian_distribution}/main/binary-amd64/Packages.gz"
             )
         ).decode("utf-8"),
         re.M,
