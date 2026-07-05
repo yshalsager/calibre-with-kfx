@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/python:3.14-slim-trixie@sha256:63a4c7f612a00f92042cbdcc7cdc6a306f38485af0a200b9c89de7d9b1607d15
+FROM public.ecr.aws/docker/library/python:3.14-slim-trixie@sha256:b877e50bd90de10af8d82c57a022fc2e0dc731c5320d762a27986facfc3355c1
 
 LABEL name="calibre-with-kfx" maintainer="yshalsager <contact@yshalsager.com>"
 LABEL org.opencontainers.image.description="An image for running Calibre with KFX support to allow conversion of KFX files to other formats."
