@@ -53,7 +53,7 @@ ENV XDG_RUNTIME_DIR=/run/user/1000
 # KFX Output 272407
 # KFX Input 291290
 COPY --chown=$USERNAME:$USERNAME kp3.reg /home/$USERNAME/kp3.reg
-RUN cd /home/$USERNAME/ && curl -fsSLO https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
+RUN cd /home/$USERNAME/ && curl -fsSLO https://d3mb67z9ki82yk.cloudfront.net/KindlePreviewerSetup.exe \
     && env XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp/xdg-runtime} DISPLAY=:0 WINEARCH=win64 WINEDEBUG=-all wine KindlePreviewerInstaller.exe /S \
     && cat kp3.reg >> /home/$USERNAME/.wine/user.reg && rm KindlePreviewerInstaller.exe && rm kp3.reg \
     && curl -fsSLO https://plugins.calibre-ebook.com/272407.zip \
