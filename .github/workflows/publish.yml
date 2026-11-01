@@ -11,7 +11,7 @@ on:
 jobs:
   push_to_registry:
     name: Push Docker image to docker hub
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, ' bump versions ') || github.event_name == 'workflow_dispatch' }}
 
     permissions:
@@ -39,7 +39,7 @@ jobs:
       - name: Get version from commit message
         id: get-version
         run: |
-          version=$(git log -1 --pretty=%B | grep -o '[0-9]\{8\}-[0-9]\{4\}')
+          version=$(git log -1 --pretty=%B | grep -o '[0-9]\{8\}-[0-9]\{4\}' || date -u +'%Y%m%d-%H%M')
           echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Set image tag and description
