@@ -1,5 +1,5 @@
 {
-    "base": "python:3.14-slim-trixie",
+    "base": "python:3.15-slim-trixie",
     "calibre": "v9.17.0",
     "kfx_input": "2.34.2",
     "kfx_output": "2.22.0",
