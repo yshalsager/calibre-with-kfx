@@ -14,7 +14,6 @@
 
 A Docker image for converting eBooks using Calibre with KFX support.
 
-> KP4 migration in progress: the image installs Kindle Previewer 4, but KFX conversion requires the upcoming KFX Output Linux patch.
 
 > KFX is Amazon's proprietary eBook format used for Kindle devices.
 

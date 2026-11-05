@@ -11,7 +11,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # Calibre deps
-    ca-certificates curl gnupg2 xz-utils 7zip \
+    ca-certificates curl gnupg2 xz-utils 7zip patch \
     # X11 runtime deps
     libx11-6 libxext6 libxrender1 libxi6 libxcursor1 libxinerama1 libxfixes3 \
     # QTWebEngine
@@ -65,11 +65,19 @@ RUN WINEARCH=win64 WINEDEBUG=-all WINEDLLOVERRIDES=mscoree,mshtml= wineboot --in
     && wineserver -w \
     && WINEDEBUG=-all wine "$KP4_PATH/KindlePreviewerCLI.exe" --help | grep -F 'Kindle Previewer 4.'
 
+# shortcut: pin KFX Output 2.22.0 until upstream ships Linux KP4 support.
+COPY --chown=$USERNAME:$USERNAME patches/kfx-output-linux-kp4.patch /tmp/kfx-output-linux-kp4.patch
 RUN cd /home/$USERNAME/ && curl -fsSLO https://plugins.calibre-ebook.com/272407.zip \
-    && calibre-customize -a 272407.zip \
+    && echo '8202c723487be06a9461c2eb1c91984076c71935766303e65ae48933c2efb802  272407.zip' | sha256sum -c - \
+    && 7z x -y -okfx-output 272407.zip \
+    && sed -i 's/\r$//' kfx-output/kfxlib/generate_kpf_{common,using_cli}.py \
+    && patch --directory=kfx-output --strip=1 --batch --fuzz=0 < /tmp/kfx-output-linux-kp4.patch \
+    && python -c "import shutil; shutil.make_archive('kfx-output-patched', 'zip', 'kfx-output')" \
+    && calibre-customize -a kfx-output-patched.zip \
     && curl -fsSLO https://plugins.calibre-ebook.com/291290.zip \
     && calibre-customize -a 291290.zip \
-    && rm 272407.zip 291290.zip
+    && rm 272407.zip 291290.zip kfx-output-patched.zip /tmp/kfx-output-linux-kp4.patch \
+    && rm -rf kfx-output
 
 COPY entrypoint.sh /sbin/entrypoint.sh
 ENTRYPOINT ["/sbin/entrypoint.sh"]

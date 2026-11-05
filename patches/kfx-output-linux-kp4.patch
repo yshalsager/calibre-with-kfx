@@ -1,0 +1,69 @@
+--- a/kfxlib/generate_kpf_common.py
++++ b/kfxlib/generate_kpf_common.py
+@@ -164,6 +164,17 @@
+                 self.program_version = self.PROGRAM_VERSIONS.get(components)
+                 if self.program_version is None:
+                     self.program_version = "%s_%s" % (UNKNOWN_VERSION_PREFIX, repr(components))
++
++    elif IS_LINUX:
++        PROGRAM_VERSIONS = {2987008: '4.0.4'}
++
++        def locate_program(self):
++            self.program_folder = tweaks.get('kfx_output_previewer_path') or os.getenv('KP4_PATH')
++            if self.program_folder:
++                self.executable_path = os.path.join(self.program_folder, 'KindlePreviewerCLI.exe')
++                if os.path.isfile(self.executable_path):
++                    self.is_installed = True
++                    self.program_version = self.get_program_version_from_size()
+ 
+     else:
+         def locate_program(self):
+--- a/kfxlib/generate_kpf_using_cli.py
++++ b/kfxlib/generate_kpf_using_cli.py
+@@ -2,11 +2,12 @@
+ import io
+ import os
+ import re
++import subprocess
+ 
+ from .generate_kpf_common import (ConversionProcess, ConversionResult, ConversionSequence, KindlePreviewer)
+ from .message_logging import log
+ from .utilities import (
+-    file_read_binary, file_read_utf8, join_search_path, unique_name, windows_user_dir, winepath,
++    file_read_binary, file_read_utf8, join_search_path, unique_name, windows_user_dir, winepath, wineprefix,
+     IS_LINUX, IS_WINDOWS, PATH_SEPARATOR)
+ 
+ 
+@@ -230,13 +231,22 @@
+ 
+         self.use_wincon = self.application.USE_WINCON
+         prefix = self.application.ARG_PREFIX
++        self.get_clean_environment()
++        output_path = out_dir
++
++        if IS_LINUX and self.application.is_tool('KPR4'):
++            self.env.update(WINEPREFIX=wineprefix(), LC_CTYPE='C.UTF-8')
++            in_file_name, output_path = [
++                subprocess.check_output(['winepath', '-w', path], env=self.env,
++                                        universal_newlines=True, timeout=30).rstrip('\r\n')
++                for path in (in_file_name, out_dir)]
+ 
+         self.argv = [
+             self.application.executable_path,
+             in_file_name,
+             prefix + "convert",
+             prefix + "locale", "en",
+-            prefix + "output", out_dir,
++            prefix + "output", output_path,
+             ]
+ 
+         if "QC" in self.sequence.flags:
+@@ -247,8 +257,6 @@
+ 
+         self.working_dir = out_dir
+         self.out_file_name = os.path.join(out_dir, "log_KPR_CLI.txt")
+-
+-        self.get_clean_environment()
+ 
+         if IS_LINUX:
+             for wine_executable in ["wine64", "wine"]:
