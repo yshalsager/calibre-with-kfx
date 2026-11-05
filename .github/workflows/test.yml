@@ -1,28 +1,34 @@
 name: Test converting
 
 on:
+  push:
+    branches:
+      - master
+  pull_request:
   workflow_dispatch:
     inputs:
       tags:
-        description: "Image Tag"
+        description: 'Image Tag'
         required: true
         type: string
-  registry_package:
-    types: [published, updated]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  test:
+  tracking:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - name: Test
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+        with:
+          version: '2026.11.0'
+          install: false
+      - run: mise run test-tracking
+      - name: Test published image
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.tags }}
         run: |
-          image=ghcr.io/${{ github.repository }}:${{ github.event.registry_package.package_version.tag_name || github.event.inputs.tags }}
-          docker pull $image
-          curl -s -L -O "https://github.com/IDPF/epub3-samples/releases/download/20170606/trees.epub"
-          echo "Running test script..."
-          sudo chown 1000:1000 .
-          docker run --rm -v "$(pwd):/app:rw" --entrypoint="bash" $image -c "./test.sh trees.epub"
+          docker pull "$IMAGE"
+          mise run test

@@ -14,7 +14,6 @@
 
 A Docker image for converting eBooks using Calibre with KFX support.
 
-
 > KFX is Amazon's proprietary eBook format used for Kindle devices.
 
 ## Why?
@@ -24,7 +23,7 @@ and [KFX Output](https://www.mobileread.com/forums/showthread.php?t=272407) plug
 
 ## Usage
 
-To use the Docker image, you can build it locally using the Dockerfile provided in this repository, or you can pull the image from [Docker Hub](https://hub.docker.com/r/yshalsager/calibre-with-kfx) using the following command:
+You can [build the locked image locally](#building-and-testing), or pull it from [Docker Hub](https://hub.docker.com/r/yshalsager/calibre-with-kfx):
 
 ```bash
 docker pull yshalsager/calibre-with-kfx
@@ -71,8 +70,34 @@ Common KFX Input CLI flags:
 
 KFX Input has one calibre "Convert Books" option: `allow_conversion_with_errors` (default off). It also has plugin preferences used by its CLI/From-KFX UI (for example splitting landscape comic images when creating PDF).
 
+## Building and testing
+
+Requires Docker and [mise](https://mise.jdx.dev/) 2026.11.0 or newer. The offline tracking tests also use Perl's standard socket module and GNU checksum utilities. The image targets Linux amd64, including when built on another architecture.
+
+```sh
+mise trust mise.toml
+mise run versions       # inspect the committed versions, without network discovery
+mise run build          # build calibre-with-kfx:local from the lockfile
+mise run test           # conversion tests; prints the temporary output directory
+mise run test-tracking  # offline metadata and checksum regression tests
+```
+
+Use `calibre-with-kfx:local` in the usage examples to run your local image. `mise run build` supplies the required locked build arguments. To test another image, run `IMAGE=ghcr.io/yshalsager/calibre-with-kfx:<tag> mise run test`, or dispatch the conversion-test workflow manually.
+
 ## Versioning
 
-The docker image versions are tagged with build date and time. There's a [GitHub release](https://github.com/yshalsager/calibre-with-kfx/releases) for each tag that lists versions of each component of the image, like base OS, Calibre and its plugins, and Kindle Previewer.
+`mise.tracking.lock` records the versions, artifact URLs, and checksums used by Docker. Labels and [GitHub releases](https://github.com/yshalsager/calibre-with-kfx/releases) read the same lockfile. The base image remains pinned in `Dockerfile` and updated by Renovate.
 
-Whenever any component gets updated, a new image is built and pushed.
+Version discovery is isolated in `mise.tracking.toml`, so normal mise commands do not fetch upstream metadata. To update:
+
+```sh
+mise trust mise.tracking.toml
+mise run update-versions
+git diff -- mise.tracking.lock
+```
+
+The weekly workflow commits lockfile changes, triggering a build, conversion tests, and publication with a UTC date/time plus unique workflow-run tag. Publication is serialized and pushes the tested image without rebuilding it or repeating conversions after publication. Only a build of the current `master` head updates `latest`; older reruns can publish their unique version tags without rolling `latest` backward.
+
+KP4 is tracked as `version+etag`: Amazon's release notes supply the advertised version, and a HEAD request detects Windows installer replacements. Amazon currently publishes only an MD5 for that installer; it is a content-change check, not strong authenticity verification. The build checks the extracted Windows package version against the advertised version and fails on a mismatch. Mutable vendor URLs can stop serving older locked artifacts.
+
+KFX Output stays pinned at 2.22.0 while `patches/kfx-output-linux-kp4.patch` provides Linux KP4 support. Review the patch and conversion tests before changing that pin. Wine tracking pins the staging metapackage for Debian trixie, whose exact-version dependencies pin the amd64/i386 Wine packages. Apt verifies those dependencies against its signed repository metadata; their hashes and other OS dependencies are not individually recorded in the mise lockfile.

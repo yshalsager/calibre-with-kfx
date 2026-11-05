@@ -1,0 +1,7 @@
+*
+!Dockerfile
+!entrypoint.sh
+!scripts/
+!scripts/download-locked.sh
+!patches/
+!patches/**

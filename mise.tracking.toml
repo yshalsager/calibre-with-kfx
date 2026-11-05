@@ -1,0 +1,57 @@
+[settings]
+lockfile = true
+
+[vars]
+kp4_identity = '''{{ exec(command=`
+curl -fsSI --max-time 20 https://d3mb67z9ki82yk.cloudfront.net/KindlePreviewerSetup.exe |
+awk -F ': ' '
+tolower($1) == "etag" { gsub(/["\r]/, "", $2); etag=$2 }
+tolower($1) == "x-amz-meta-md5-hash" { gsub(/\r/, "", $2); md5=$2 }
+END {
+    if (etag ~ /^[0-9a-f]+(-[0-9]+)?$/ && md5 ~ /^[0-9a-f]+$/ && length(md5) == 32)
+        print etag, md5
+    else
+        exit 1
+}'
+`) }}'''
+
+[tool_alias]
+calibre = 'github:kovidgoyal/calibre'
+kfx_input = 'http:kfx-input'
+kfx_output = 'http:kfx-output'
+kp4 = 'http:kindle-previewer'
+wine = 'http:wine-staging'
+
+[tools.calibre]
+version = 'latest'
+asset_pattern = 'calibre-{{ version }}-x86_64.txz'
+
+[tools.kfx_input]
+version = 'latest'
+url = 'https://plugins.calibre-ebook.com/291290.zip'
+version_list_url = 'https://plugins.calibre-ebook.com/'
+version_regex = '(?s)>KFX Input</a></h3>.*?<li>Version: <b>([0-9.]+)'
+
+# shortcut: pin KFX Output until upstream supports Linux KP4 and the patch is removed.
+[tools.kfx_output]
+version = '2.22.0'
+url = 'https://plugins.calibre-ebook.com/272407.zip'
+checksum = 'sha256:8202c723487be06a9461c2eb1c91984076c71935766303e65ae48933c2efb802'
+
+[tools.wine]
+version = 'latest'
+url = 'https://dl.winehq.org/wine-builds/debian/pool/main/w/wine-staging/winehq-staging_{{ version }}_amd64.deb'
+format = 'raw'
+version_list_url = 'https://dl.winehq.org/wine-builds/debian/dists/trixie/main/binary-amd64/Packages'
+version_regex = '(?ms)^Package: winehq-staging\n.*?^Version: ([^\n]+)'
+# WineHQ lists newest packages first.
+version_expr = '[versions[0]]'
+
+[tools.kp4]
+version = '4'
+url = 'https://d3mb67z9ki82yk.cloudfront.net/KindlePreviewerSetup.exe'
+format = 'raw'
+version_list_url = 'https://kindlepreviewer.s3.amazonaws.com/UG_ReleaseNotes_EN.txt'
+version_regex = 'New in Kindle Previewer (4\.\d+\.\d+):'
+version_expr = '[versions[0] + "+{{ vars.kp4_identity | split(pat=" ") | first }}"]'
+checksum = 'md5:{{ vars.kp4_identity | split(pat=" ") | last }}'

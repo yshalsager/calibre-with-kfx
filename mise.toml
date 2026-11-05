@@ -1,0 +1,52 @@
+min_version = '2026.11.0'
+
+[settings]
+task.run_auto_install = false
+
+[tasks.update-versions]
+run = 'mise -E tracking lock --bump --platform linux-x64'
+
+[tasks.versions]
+run = '''
+{% set lock = read_toml(path='mise.tracking.lock') %}
+{% set base = read_file(path='Dockerfile') | split(pat='\n') | first | trim_start(pat='FROM ') %}
+{
+printf 'base: %s\n' {{ base | quote }}
+{% for name, entries in lock.tools %}
+printf '%s: %s\n' {{ name | quote }} {{ entries[0].version | quote }}
+{% endfor %}
+} | sort
+'''
+
+[tasks.build]
+shell = 'bash -c'
+run = '''
+set -euo pipefail
+{% set lock = read_toml(path='mise.tracking.lock') %}
+args=(
+{% for name, entries in lock.tools %}
+{% set entry = entries[0] %}
+{% set artifact = entry['platforms.linux-x64'] %}
+{% set prefix = name | upper %}
+    --build-arg {{ (prefix ~ '_VERSION=' ~ entry.version) | quote }}
+    --build-arg {{ (prefix ~ '_URL=' ~ artifact.url) | quote }}
+    --build-arg {{ (prefix ~ '_CHECKSUM=' ~ artifact.checksum) | quote }}
+{% endfor %}
+)
+description=$(mise run --quiet --output=interleave versions | paste -sd ';' -)
+docker build --platform linux/amd64 "${args[@]}" --tag calibre-with-kfx:local \
+    --label "org.opencontainers.image.description=Using $description" .
+'''
+
+[tasks.test]
+run = '''
+test_dir=$(mktemp -d)
+chmod 1777 "$test_dir"
+curl -fsSL https://github.com/IDPF/epub3-samples/releases/download/20170606/trees.epub -o "$test_dir/trees.epub"
+printf 'Conversion outputs: %s\n' "$test_dir"
+docker run --rm --platform linux/amd64 --network none -v "$test_dir:/app" -v "$PWD/test.sh:/app/test.sh:ro" \
+    --entrypoint bash "${IMAGE:-calibre-with-kfx:local}" -c './test.sh trees.epub'
+'''
+
+[tasks.test-tracking]
+run = 'bash tests/tracking.sh'

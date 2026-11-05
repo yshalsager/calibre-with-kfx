@@ -3,41 +3,32 @@ name: Update versions
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 0"
+    - cron: '0 0 * * 0'
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  update:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: master
           token: ${{ secrets.PAT }}
-      - name: Set up Python 3
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
         with:
-          python-version: 3.15
-      - name: Run
-        id: run
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          version: '2026.11.0'
+          install: false
+      - name: Update lockfile
         run: |
-          python3 update_versions.py
-          echo $(cat versions.json)
-          git add versions.json
-          if git diff --cached --exit-code; then
-            echo "Nothing changed"
-            echo "release=false" >> $GITHUB_OUTPUT
-          else
-            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git config --global user.name "github-actions[bot]"
-            version=$(date +'%Y%m%d-%H%M')
-            git commit -m "chore: bump versions $version"
+          mise trust mise.tracking.toml
+          mise run update-versions
+          mise run versions
+          git add mise.tracking.lock
+          if ! git diff --cached --quiet; then
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git config user.name 'github-actions[bot]'
+            git commit -m "chore: bump versions $(date -u +'%Y%m%d-%H%M')"
             git push origin master
-            echo "[ghcr.io/${{ github.repository }}:$version](https://ghcr.io/${{ github.repository }}) Built using: $(jq -r 'to_entries | map("\n- \(.key): \(.value)") | .[]' versions.json)" > notes.txt
-            echo "release=true" >> $GITHUB_OUTPUT
-            echo "version=$version" >> $GITHUB_OUTPUT
           fi

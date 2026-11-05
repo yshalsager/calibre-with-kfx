@@ -4,104 +4,92 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "versions.json"
+      - 'mise.toml'
+      - 'mise.tracking.toml'
+      - 'mise.tracking.lock'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - 'scripts/download-locked.sh'
+      - 'patches/**'
+      - 'entrypoint.sh'
+      - 'test.sh'
+      - '.github/workflows/publish.yml'
     branches:
       - master
 
+concurrency:
+  group: publish-image
+  cancel-in-progress: false
+
 jobs:
   push_to_registry:
-    name: Push Docker image to docker hub
+    name: Build, test, and publish
     runs-on: ubuntu-24.04
-    if: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, ' bump versions ') || github.event_name == 'workflow_dispatch' }}
-
     permissions:
       packages: write
       contents: write
     steps:
-      - name: Check out the repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           token: ${{ secrets.PAT }}
+      - uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+        with:
+          version: '2026.11.0'
+          install: false
 
       - name: Log in to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Login to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get version from commit message
-        id: get-version
+      - name: Read locked versions
+        id: metadata
+        env:
+          REPOSITORY: ${{ github.repository }}
         run: |
-          version=$(git log -1 --pretty=%B | grep -o '[0-9]\{8\}-[0-9]\{4\}' || date -u +'%Y%m%d-%H%M')
-          echo "version=$version" >> $GITHUB_OUTPUT
-
-      - name: Set image tag and description
-        id: tag
-        run: |
-          versions_single=$(jq -r 'to_entries | map("\(.key): \(.value)") | join(" - ")' versions.json)
-          versions_multiline=$(jq -r 'to_entries | map("- \(.key): \(.value)") | join("\n")' versions.json)
-          repo='${{ github.repository }}'
-          version='${{ steps.get-version.outputs.version }}'
-          echo "description=Using $versions_single" >> "$GITHUB_OUTPUT"
+          version="$(date -u +'%Y%m%d-%H%M')-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          versions=$(mise run --quiet --output=interleave versions)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           {
-            echo "release_body<<EOF"
-            printf '[ghcr.io/%s:%s](https://ghcr.io/%s) Built using:\n%s\n' "$repo" "$version" "$repo" "$versions_multiline"
+            echo 'release_body<<EOF'
+            printf '[ghcr.io/%s:%s](https://ghcr.io/%s) Built using:\n' "$REPOSITORY" "$version" "$REPOSITORY"
+            printf '%s\n' "$versions" | sed 's/^/- /'
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
-      - name: Build Docker images
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          file: ./Dockerfile
-          load: true
-          tags: |
-            ${{ github.repository }}:latest
-            ${{ github.repository }}:${{ steps.get-version.outputs.version }}
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version }}
-          labels: |
-            org.opencontainers.image.description=${{ steps.tag.outputs.description }}
+      - name: Build locked image
+        run: mise run build
+      - name: Test conversions
+        env:
+          IMAGE: calibre-with-kfx:local
+        run: mise run test
 
-      - name: Test
+      - name: Push tested image and tag
+        env:
+          REPOSITORY: ${{ github.repository }}
+          VERSION: ${{ steps.metadata.outputs.version }}
         run: |
-          curl -s -L -O "https://github.com/IDPF/epub3-samples/releases/download/20170606/trees.epub"
-          echo "Running test script..."
-          sudo chown 1000:1000 .
-          docker run --rm -v "$(pwd):/app:rw" --entrypoint="bash" ${{ github.repository }}:latest -c "./test.sh trees.epub"
+          images=("$REPOSITORY:$VERSION" "ghcr.io/$REPOSITORY:$VERSION")
+          if [[ "$(git rev-parse HEAD)" == "$(git ls-remote origin refs/heads/master | cut -f1)" ]]; then
+            images+=("$REPOSITORY:latest" "ghcr.io/$REPOSITORY:latest")
+          fi
+          for image in "${images[@]}"; do
+            docker tag calibre-with-kfx:local "$image"
+            docker push "$image"
+          done
+          git tag "$VERSION"
+          git push origin "$VERSION"
 
-      - name: Create and push tag
-        if: success()
-        run: |
-          git tag ${{ steps.get-version.outputs.version }}
-          git push origin ${{ steps.get-version.outputs.version }}
-
-      - name: Create Release
-        if: success()
+      - name: Create release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3
         with:
-          tag_name: ${{ steps.get-version.outputs.version }}
-          name: ${{ steps.get-version.outputs.version }}
-          body: ${{ steps.tag.outputs.release_body }}
-
-      - name: Push Docker images
-        if: success()
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ github.repository }}:latest
-            ${{ github.repository }}:${{ steps.get-version.outputs.version }}
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.get-version.outputs.version }}
-          labels: |
-            org.opencontainers.image.description=${{ steps.tag.outputs.description }}
+          tag_name: ${{ steps.metadata.outputs.version }}
+          name: ${{ steps.metadata.outputs.version }}
+          body: ${{ steps.metadata.outputs.release_body }}
