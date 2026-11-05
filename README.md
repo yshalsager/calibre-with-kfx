@@ -96,7 +96,7 @@ mise run update-versions
 git diff -- mise.tracking.lock
 ```
 
-The weekly workflow commits lockfile changes, triggering a build, conversion tests, and publication with a UTC date/time plus unique workflow-run tag. Publication is serialized and pushes the tested image without rebuilding it or repeating conversions after publication. Only a build of the current `master` head updates `latest`; older reruns can publish their unique version tags without rolling `latest` backward.
+The weekly workflow commits lockfile changes, triggering a build, conversion tests, and publication with a UTC `YYYYMMDD-HHMMSS` tag. Publication is serialized and pushes the tested image without rebuilding it or repeating conversions after publication. Only a build of the current `master` head updates `latest`; older reruns can publish their unique version tags without rolling `latest` backward.
 
 KP4 is tracked as `version+etag`: Amazon's release notes supply the advertised version, and a HEAD request detects Windows installer replacements. Amazon currently publishes only an MD5 for that installer; it is a content-change check, not strong authenticity verification. The build checks the extracted Windows package version against the advertised version and fails on a mismatch. Mutable vendor URLs can stop serving older locked artifacts.
 

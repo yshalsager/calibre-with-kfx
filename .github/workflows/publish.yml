@@ -54,7 +54,7 @@ jobs:
         env:
           REPOSITORY: ${{ github.repository }}
         run: |
-          version="$(date -u +'%Y%m%d-%H%M')-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          version="$(date -u +'%Y%m%d-%H%M%S')"
           versions=$(mise run --quiet --output=interleave versions)
           echo "version=$version" >> "$GITHUB_OUTPUT"
           {
