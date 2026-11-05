@@ -13,7 +13,7 @@ KINDLE_PREVIEWER_RELEASE_NOTES_URL = (
     "https://s3.amazonaws.com/kindlepreviewer/UG_ReleaseNotes_EN.txt"
 )
 KINDLE_PREVIEWER_URL = (
-    "https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe"
+    "https://d3mb67z9ki82yk.cloudfront.net/KindlePreviewerSetup.exe"
 )
 KINDLE_PREVIEWER_VERSION_PATTERN = r"New in Kindle Previewer (\d+(?:\.\d+){2,}):"
 WINE_REPO_URL = "https://dl.winehq.org/wine-builds/debian/dists/"

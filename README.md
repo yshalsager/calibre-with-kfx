@@ -14,11 +14,13 @@
 
 A Docker image for converting eBooks using Calibre with KFX support.
 
+> KP4 migration in progress: the image installs Kindle Previewer 4, but KFX conversion requires the upcoming KFX Output Linux patch.
+
 > KFX is Amazon's proprietary eBook format used for Kindle devices.
 
 ## Why?
 
-Because Amazon's [Kindle Previewer 3](https://kdp.amazon.com/en_US/help/topic/G202131170) is the only way currently to convert books into KFX using [Calibre](https://calibre-ebook.com/) [KFX Input](https://www.mobileread.com/forums/showthread.php?t=291290)
+Because Amazon's [Kindle Previewer 4](https://kdp.amazon.com/en_US/help/topic/G202131170) is the only way currently to convert books into KFX using [Calibre](https://calibre-ebook.com/) [KFX Input](https://www.mobileread.com/forums/showthread.php?t=291290)
 and [KFX Output](https://www.mobileread.com/forums/showthread.php?t=272407) plugins, and it's not available on Linux, so I run it under docker using [Wine](https://appdb.winehq.org/objectManager.php?sClass=application&iId=18012).
 
 ## Usage

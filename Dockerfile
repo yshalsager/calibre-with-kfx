@@ -11,7 +11,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     # Calibre deps
-    ca-certificates curl gnupg2 xz-utils \
+    ca-certificates curl gnupg2 xz-utils 7zip \
     # X11 runtime deps
     libx11-6 libxext6 libxrender1 libxi6 libxcursor1 libxinerama1 libxfixes3 \
     # QTWebEngine
@@ -37,6 +37,15 @@ RUN dpkg --add-architecture i386 \
 # Install calibre
 RUN curl -fsSL https://download.calibre-ebook.com/linux-installer.sh | sh /dev/stdin
 
+ENV KP4_PATH=/opt/kp4/KindlePreviewerApp
+
+# Extract the CLI payload without Windows MSIX registration.
+RUN curl -fsSLo /tmp/KindlePreviewerSetup.exe https://d3mb67z9ki82yk.cloudfront.net/KindlePreviewerSetup.exe \
+    && 7z x -y -o/tmp/kp4-installer /tmp/KindlePreviewerSetup.exe '$PLUGINSDIR/KindlePreviewerApp.msix' \
+    && 7z x -y -o/opt/kp4 '/tmp/kp4-installer/$PLUGINSDIR/KindlePreviewerApp.msix' \
+    && test -f "$KP4_PATH/KindlePreviewerCLI.exe" \
+    && rm -rf /tmp/KindlePreviewerSetup.exe /tmp/kp4-installer
+
 ARG USERNAME=calibre
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
@@ -52,13 +61,11 @@ ENV XDG_RUNTIME_DIR=/run/user/1000
 # Calibre plugins and Kindle support
 # KFX Output 272407
 # KFX Input 291290
-COPY --chown=$USERNAME:$USERNAME kp3.reg /home/$USERNAME/kp3.reg
-# KFX Output only supports Previewer 3 on Linux/Wine.
-RUN cd /home/$USERNAME/ && curl -fsSLO https://d2bzeorukaqrvt.cloudfront.net/KindlePreviewerInstaller.exe \
-    && env XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp/xdg-runtime} DISPLAY=:0 WINEARCH=win64 WINEDEBUG=-all wine KindlePreviewerInstaller.exe /S \
-    && test -f "/home/$USERNAME/.wine/drive_c/users/$USERNAME/AppData/Local/Amazon/Kindle Previewer 3/Kindle Previewer 3.exe" \
-    && cat kp3.reg >> /home/$USERNAME/.wine/user.reg && rm KindlePreviewerInstaller.exe && rm kp3.reg \
-    && curl -fsSLO https://plugins.calibre-ebook.com/272407.zip \
+RUN WINEARCH=win64 WINEDEBUG=-all WINEDLLOVERRIDES=mscoree,mshtml= wineboot --init \
+    && wineserver -w \
+    && WINEDEBUG=-all wine "$KP4_PATH/KindlePreviewerCLI.exe" --help | grep -F 'Kindle Previewer 4.'
+
+RUN cd /home/$USERNAME/ && curl -fsSLO https://plugins.calibre-ebook.com/272407.zip \
     && calibre-customize -a 272407.zip \
     && curl -fsSLO https://plugins.calibre-ebook.com/291290.zip \
     && calibre-customize -a 291290.zip \
