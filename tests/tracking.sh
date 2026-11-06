@@ -65,6 +65,7 @@ chmod +x "$work/bin/curl" "$work/bin/docker"
 export PATH="$work/bin:$PATH"
 export MISE_CONFIG_DIR="$work/config"
 export MISE_CACHE_DIR="$work/cache"
+export MISE_STATE_DIR="$work/state"
 export MISE_TRUSTED_CONFIG_PATHS="$work/project"
 export HEAD_LOG="$work/heads" DOCKER_LOG="$work/docker"
 export TEST_ETAG=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
