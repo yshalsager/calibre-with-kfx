@@ -1,9 +1,10 @@
 # Calibre with KFX Docker
 
-![GitHub CI](https://github.com/yshalsager/calibre-with-kfx/actions/workflows/publish.yml/badge.svg)
+[![GitHub CI](https://github.com/yshalsager/calibre-with-kfx/actions/workflows/publish.yml/badge.svg)](https://github.com/yshalsager/calibre-with-kfx/actions/workflows/publish.yml)
 [![Docker Hub badge](https://img.shields.io/docker/pulls/yshalsager/calibre-with-kfx)](https://hub.docker.com/r/yshalsager/calibre-with-kfx)
 [![ghcr.io badge](https://ghcr-badge.egpl.dev/yshalsager/calibre-with-kfx/latest_tag?trim=major&label=GitHub%20Registry&color=steelblue)](https://github.com/yshalsager/calibre-with-kfx/pkgs/container/calibre-with-kfx)
-[![ghcr.io size badge](https://ghcr-badge.egpl.dev/yshalsager/calibre-with-kfx/size?tag=latest&label=Image%20size&color=steelblue)](https://github.com/yshalsager/calibre-with-kfx/pkgs/container/calibre-with-kfx)
+[![Full image size](https://ghcr-badge.egpl.dev/yshalsager/calibre-with-kfx/size?tag=full&label=Full%20image&color=steelblue)](https://github.com/yshalsager/calibre-with-kfx/pkgs/container/calibre-with-kfx)
+[![Slim image size](https://ghcr-badge.egpl.dev/yshalsager/calibre-with-kfx/size?tag=slim&label=Slim%20image&color=steelblue)](https://github.com/yshalsager/calibre-with-kfx/pkgs/container/calibre-with-kfx)
 
 [![GitHub license](https://img.shields.io/github/license/yshalsager/calibre-with-kfx.svg)](https://github.com/yshalsager/calibre-with-kfx/blob/master/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/yshalsager/calibre-with-kfx.svg)](https://GitHub.com/yshalsager/calibre-with-kfx/releases/latest)
