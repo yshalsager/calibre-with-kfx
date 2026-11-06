@@ -19,6 +19,7 @@ END {
 calibre = 'github:kovidgoyal/calibre'
 kfx_input = 'http:kfx-input'
 kfx_output = 'http:kfx-output'
+kfxgen = 'http:kfxgen'
 kp4 = 'http:kindle-previewer'
 wine = 'http:wine-staging'
 
@@ -37,6 +38,12 @@ version_regex = '(?s)>KFX Input</a></h3>.*?<li>Version: <b>([0-9.]+)'
 version = '2.22.0'
 url = 'https://plugins.calibre-ebook.com/272407.zip'
 checksum = 'sha256:8202c723487be06a9461c2eb1c91984076c71935766303e65ae48933c2efb802'
+
+# TODO: switch back to release tracking once a new version includes these RTL fixes.
+[tools.kfxgen]
+version = '5.23.0+c50f414197a4a236ebe4a654a3b2b3b7067a25ee'
+url = 'https://codeload.github.com/jloutsch/kfxgen/zip/{{ version | split(pat="+") | last }}'
+format = 'raw'
 
 [tools.wine]
 version = 'latest'

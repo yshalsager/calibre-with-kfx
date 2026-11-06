@@ -12,7 +12,8 @@ export XDG_RUNTIME_DIR
 # Print help message
 function print_usage {
     echo "Usage: $0 [INPUT_FILE] [OUTPUT_FILE] [OPTIONS]"
-    echo "Converts an ebook to a different format using Calibre's ebook-convert."
+    echo "Converts an ebook to a different format using Calibre."
+    echo "KFX_BACKEND=previewer|kfxgen selects the KFX backend (default: previewer)."
 }
 
 while getopts ":h" opt; do
@@ -69,9 +70,19 @@ function run_with_xvfb {
 # Convert input file to output file
 function convert_file {
     shift 2
-    if [[ "$output_extension" == "kfx" ]]; then
-        # KFX Output's CLI accepts: infile [outfile] plus flags like --pages/--book/etc.
-        run_with_xvfb calibre-debug -r "KFX Output" -- "$input_file" "$output_file" "$@"
+    if [[ "${output_extension,,}" == "kfx" ]]; then
+        case "${KFX_BACKEND:-previewer}" in
+            previewer)
+                run_with_xvfb calibre-debug -r "KFX Output" -- "$input_file" "$output_file" "$@"
+                ;;
+            kfxgen)
+                ebook-convert "$input_file" "$output_file" "$@"
+                ;;
+            *)
+                echo "Invalid KFX_BACKEND: $KFX_BACKEND (expected previewer or kfxgen)" >&2
+                return 1
+                ;;
+        esac
     else
         ebook-convert "$input_file" "$output_file" "$@"
     fi

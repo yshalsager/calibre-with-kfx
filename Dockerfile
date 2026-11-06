@@ -105,6 +105,20 @@ RUN cd /home/$USERNAME/ && download-locked "$KFX_OUTPUT_URL" "$KFX_OUTPUT_CHECKS
     && rm 272407.zip 291290.zip kfx-output-patched.zip /tmp/kfx-output-linux-kp4.patch \
     && rm -rf kfx-output
 
+ARG KFXGEN_VERSION
+ARG KFXGEN_URL
+ARG KFXGEN_CHECKSUM
+RUN download-locked "$KFXGEN_URL" "$KFXGEN_CHECKSUM" /tmp/kfxgen-source.zip \
+    && 7z x -y -o/tmp /tmp/kfxgen-source.zip \
+    && mv "/tmp/kfxgen-${KFXGEN_VERSION##*+}" /tmp/kfxgen \
+    && cp /tmp/kfxgen/{LICENSE,NOTICE} /tmp/kfxgen/plugin/ \
+    && printf 'kfxgen\nVersion: %s\nLicense: GPL v3\n' "$KFXGEN_VERSION" > /tmp/kfxgen/plugin/about.txt \
+    && python -c "import shutil; shutil.make_archive('/tmp/kfxgen', 'zip', '/tmp/kfxgen/plugin')" \
+    && calibre-customize -a /tmp/kfxgen.zip \
+    && calibre-customize --disable-plugin 'KFX Output' \
+    && calibre-debug -c 'import sys; from calibre.customize.ui import find_plugin, plugin_for_output_format; actual = ".".join(map(str, find_plugin("kfxgen").version)); sys.exit(0 if actual == sys.argv[1] and plugin_for_output_format("kfx").name == "kfxgen" else f"kfxgen installation or selection failed: {actual}")' "${KFXGEN_VERSION%%+*}" \
+    && rm -rf /tmp/kfxgen /tmp/kfxgen-source.zip /tmp/kfxgen.zip
+
 COPY entrypoint.sh /sbin/entrypoint.sh
 ENTRYPOINT ["/sbin/entrypoint.sh"]
 

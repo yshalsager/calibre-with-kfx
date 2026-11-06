@@ -18,8 +18,9 @@ A Docker image for converting eBooks using Calibre with KFX support.
 
 ## Why?
 
-Because Amazon's [Kindle Previewer 4](https://kdp.amazon.com/en_US/help/topic/G202131170) is the only way currently to convert books into KFX using [Calibre](https://calibre-ebook.com/) [KFX Input](https://www.mobileread.com/forums/showthread.php?t=291290)
-and [KFX Output](https://www.mobileread.com/forums/showthread.php?t=272407) plugins, and it's not available on Linux, so I run it under docker using [Wine](https://appdb.winehq.org/objectManager.php?sClass=application&iId=18012).
+[Calibre](https://calibre-ebook.com/)'s [KFX Output](https://www.mobileread.com/forums/showthread.php?t=272407) plugin requires Amazon's [Kindle Previewer 4](https://kdp.amazon.com/en_US/help/topic/G202131170), which isn't available on Linux. This image runs it using [Wine](https://appdb.winehq.org/objectManager.php?sClass=application&iId=18012).
+
+It also includes [kfxgen](https://github.com/jloutsch/kfxgen) for native KFX generation without Previewer or Wine, and [KFX Input](https://www.mobileread.com/forums/showthread.php?t=291290) for converting KFX to other formats.
 
 ## Usage
 
@@ -41,7 +42,21 @@ docker run --rm -it -v "/path/to/local/folder:/app:rw" yshalsager/calibre-with-k
 - Convert to KFX: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx epub30-spec.epub epub30-spec.kfx`
 - Convert to KFX with approximate page numbers (auto): `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx book.epub book.kfx --pages 0`
 
-When converting to KFX, extra args are passed to the KFX Output plugin (`calibre-debug -r "KFX Output" -- ...`). Useful flags include:
+### KFX backends
+
+`KFX_BACKEND` selects the backend when the output is KFX:
+
+- `previewer` (default): KFX Output via Kindle Previewer under Wine; preserves existing behavior.
+- `kfxgen`: native generation via `ebook-convert`, without starting Wine or Xvfb.
+
+```bash
+docker run --rm -it -v "$(pwd):/app:rw" -e KFX_BACKEND=kfxgen yshalsager/calibre-with-kfx \
+  book.epub book.kfx --kfxgen-open-at-cover
+```
+
+Options are backend-specific and are passed through unchanged. There is no automatic fallback between backends. Non-KFX output ignores `KFX_BACKEND`.
+
+For `previewer`, extra args are passed to KFX Output (`calibre-debug -r "KFX Output" -- ...`). Useful flags include:
 
 - `--pages N` create approximate page numbers if missing (`0` = auto)
 - `--book` mark as EBOK (vs default PDOC)
@@ -49,6 +64,18 @@ When converting to KFX, extra args are passed to the KFX Output plugin (`calibre
 - `--logs` include Kindle Previewer conversion logs
 - `--quality` include Kindle Previewer quality report
 - `--timeout` stop conversions lasting over ~15 minutes
+
+For `kfxgen`, extra args are `ebook-convert` options, including:
+
+- `--kfxgen-open-at-cover` open new books at their cover
+- `--kfxgen-disable-approximate-pages` skip estimated page numbers (enabled by default when real pages are missing)
+- `--kfxgen-disable-font-embedding` use the Kindle's selected font instead of embedding publisher fonts
+- `--kfxgen-embed-original-images` preserve original image resolution
+- `--kfxgen-disable-native-tables` write tables as paragraphs
+
+kfxgen does not accept Previewer's `--pages`, `--book`, or `--asin` flags. This image builds it from pinned commit [`c50f414`](https://github.com/jloutsch/kfxgen/commit/c50f414197a4a236ebe4a654a3b2b3b7067a25ee), including RTL fixes not yet released in 5.23.0. Its output can still differ in formatting, so Previewer remains the default.
+
+Both plugins stay installed. KFX Output is disabled for automatic format selection, so direct `ebook-convert book.epub book.kfx` uses kfxgen. Its explicit `calibre-debug -r "KFX Output" -- ...` command still uses Previewer.
 
 When converting from KFX to other formats, this image uses `ebook-convert` normally. Any `ebook-convert` CLI options can be passed as extra args.
 
@@ -78,7 +105,7 @@ Requires Docker and [mise](https://mise.jdx.dev/) 2026.11.0 or newer. The offlin
 mise trust mise.toml
 mise run versions       # inspect the committed versions, without network discovery
 mise run build          # build calibre-with-kfx:local from the lockfile
-mise run test           # conversion tests; prints the temporary output directory
+mise run test           # both KFX backends and non-KFX conversions; prints the temporary output directory
 mise run test-tracking  # offline metadata and checksum regression tests
 ```
 
@@ -99,5 +126,7 @@ git diff -- mise.tracking.lock
 The weekly workflow commits lockfile changes, triggering a build, conversion tests, and publication with a UTC `YYYYMMDD-HHMMSS` tag. Publication is serialized and pushes the tested image without rebuilding it or repeating conversions after publication. Only a build of the current `master` head updates `latest`; older reruns can publish their unique version tags without rolling `latest` backward.
 
 KP4 is tracked as `version+etag`: Amazon's release notes supply the advertised version, and a HEAD request detects Windows installer replacements. Amazon currently publishes only an MD5 for that installer; it is a content-change check, not strong authenticity verification. The build checks the extracted Windows package version against the advertised version and fails on a mismatch. Mutable vendor URLs can stop serving older locked artifacts.
+
+kfxgen is temporarily pinned as `version+commit` to include unreleased RTL fixes. Its source archive is checksum-verified, then packaged as a Calibre plugin during the build, including upstream license notices. Return to release tracking once those fixes ship.
 
 KFX Output stays pinned at 2.22.0 while `patches/kfx-output-linux-kp4.patch` provides Linux KP4 support. Review the patch and conversion tests before changing that pin. Wine tracking pins the staging metapackage for Debian trixie, whose exact-version dependencies pin the amd64/i386 Wine packages. Apt verifies those dependencies against its signed repository metadata; their hashes and other OS dependencies are not individually recorded in the mise lockfile.

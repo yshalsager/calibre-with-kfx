@@ -39,6 +39,7 @@ done <<'FIXTURES'
 calibre|9.1.2
 kfx_input|2.3.4
 kfx_output|2.22.0
+kfxgen|5.23.0+c50f414197a4a236ebe4a654a3b2b3b7067a25ee
 kp4|4.0.4+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 wine|11.1~trixie-1
 FIXTURES
@@ -74,7 +75,7 @@ diff -u "$work/expected-versions" "$work/versions"
 mise run --quiet --output=interleave versions > "$work/versions-again"
 cmp "$work/versions" "$work/versions-again"
 mise run --quiet --output=interleave build
-[[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 15 ]]
+[[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 18 ]]
 while IFS= read -r argument; do grep -Fxq -- "$argument" "$DOCKER_LOG"; done < "$work/expected-args"
 grep -Fxq 'linux/amd64' "$DOCKER_LOG"
 grep -Fxq 'calibre-with-kfx:local' "$DOCKER_LOG"
