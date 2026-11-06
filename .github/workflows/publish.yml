@@ -2,6 +2,8 @@ name: Publish Docker image
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * 0'
   push:
     paths:
       - 'mise.toml'
@@ -13,6 +15,7 @@ on:
       - 'patches/**'
       - 'entrypoint.sh'
       - 'test.sh'
+      - 'tests/**'
       - '.github/workflows/publish.yml'
     branches:
       - master
@@ -55,20 +58,30 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           version="$(date -u +'%Y%m%d-%H%M%S')"
-          versions=$(mise run --quiet --output=interleave versions)
           echo "version=$version" >> "$GITHUB_OUTPUT"
           {
             echo 'release_body<<EOF'
-            printf '[ghcr.io/%s:%s](https://ghcr.io/%s) Built using:\n' "$REPOSITORY" "$version" "$REPOSITORY"
-            printf '%s\n' "$versions" | sed 's/^/- /'
+            for variant in full slim; do
+              suffix=''
+              if [[ "$variant" == slim ]]; then suffix=-slim; fi
+              printf '## %s\n[ghcr.io/%s:%s%s](https://ghcr.io/%s) Built using:\n' "$variant" "$REPOSITORY" "$version" "$suffix" "$REPOSITORY"
+              VARIANT="$variant" mise run --quiet --output=interleave versions | sed 's/^/- /'
+              echo
+            done
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
-      - name: Build locked image
-        run: mise run build
-      - name: Test conversions
+      - name: Build locked slim image
         env:
-          IMAGE: calibre-with-kfx:local
+          VARIANT: slim
+        run: mise run build
+      - name: Test slim conversions
+        env:
+          VARIANT: slim
+        run: mise run test
+      - name: Build locked full image
+        run: mise run build
+      - name: Test full conversions
         run: mise run test
 
       - name: Push tested image and tag
@@ -76,13 +89,25 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           VERSION: ${{ steps.metadata.outputs.version }}
         run: |
-          images=("$REPOSITORY:$VERSION" "ghcr.io/$REPOSITORY:$VERSION")
-          if [[ "$(git rev-parse HEAD)" == "$(git ls-remote origin refs/heads/master | cut -f1)" ]]; then
-            images+=("$REPOSITORY:latest" "ghcr.io/$REPOSITORY:latest")
-          fi
-          for image in "${images[@]}"; do
-            docker tag calibre-with-kfx:local "$image"
-            docker push "$image"
+          latest=$(git ls-remote origin refs/heads/master | cut -f1)
+          for variant in full slim; do
+            source=calibre-with-kfx:local
+            suffix=''
+            if [[ "$variant" == slim ]]; then
+              source=calibre-with-kfx:slim-local
+              suffix=-slim
+            fi
+            for registry in "$REPOSITORY" "ghcr.io/$REPOSITORY"; do
+              images=("$registry:$VERSION$suffix")
+              if [[ "$(git rev-parse HEAD)" == "$latest" ]]; then
+                images+=("$registry:$variant")
+                if [[ "$variant" == full ]]; then images+=("$registry:latest"); fi
+              fi
+              for image in "${images[@]}"; do
+                docker tag "$source" "$image"
+                docker push "$image"
+              done
+            done
           done
           git tag "$VERSION"
           git push origin "$VERSION"

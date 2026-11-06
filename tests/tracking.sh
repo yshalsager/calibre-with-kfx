@@ -22,9 +22,9 @@ fi
 test ! -e "$work/unsupported"
 
 cp "$root/mise.toml" "$root/mise.tracking.toml" "$work/project/"
-printf 'FROM example.invalid/python:3.15@sha256:base\n' > "$work/project/Dockerfile"
+printf 'FROM example.invalid/debian:trixie-slim@sha256:base AS base\n' > "$work/project/Dockerfile"
 printf 'lockfile_version = 3\n' > "$work/project/mise.tracking.lock"
-printf 'base: example.invalid/python:3.15@sha256:base\n' > "$work/expected-versions"
+printf 'base: example.invalid/debian:trixie-slim@sha256:base\n' > "$work/expected-versions"
 while IFS='|' read -r name version; do
     prefix=$(printf '%s' "$name" | tr '[:lower:]' '[:upper:]')
     checksum="sha256:$(printf '%064d' 0)"
@@ -68,7 +68,7 @@ export MISE_TRUSTED_CONFIG_PATHS="$work/project"
 export HEAD_LOG="$work/heads" DOCKER_LOG="$work/docker"
 export TEST_ETAG=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 export HTTP_PROXY=http://127.0.0.1:9 HTTPS_PROXY=http://127.0.0.1:9 ALL_PROXY=http://127.0.0.1:9
-unset MISE_ENV
+unset MISE_ENV VARIANT
 cd "$work/project"
 mise run --quiet --output=interleave versions > "$work/versions"
 diff -u "$work/expected-versions" "$work/versions"
@@ -78,9 +78,38 @@ mise run --quiet --output=interleave build
 [[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 18 ]]
 while IFS= read -r argument; do grep -Fxq -- "$argument" "$DOCKER_LOG"; done < "$work/expected-args"
 grep -Fxq 'linux/amd64' "$DOCKER_LOG"
+grep -Fxq 'full' "$DOCKER_LOG"
 grep -Fxq 'calibre-with-kfx:local' "$DOCKER_LOG"
 IMAGE=example.invalid/published:manual mise run --quiet --output=interleave test > "$work/test.log"
 grep -Fxq 'example.invalid/published:manual' "$DOCKER_LOG"
+grep -Fxq 'full' "$DOCKER_LOG"
+
+VARIANT=slim mise run --quiet --output=interleave versions > "$work/slim-versions"
+grep -Ev '^(kp4|wine): ' "$work/expected-versions" > "$work/expected-slim-versions"
+diff -u "$work/expected-slim-versions" "$work/slim-versions"
+VARIANT=slim mise run --quiet --output=interleave build
+[[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 12 ]]
+while IFS= read -r argument; do
+    case "$argument" in KP4_*|WINE_*) continue ;; esac
+    grep -Fxq -- "$argument" "$DOCKER_LOG"
+done < "$work/expected-args"
+if grep -Eq '^(KP4|WINE)_' "$DOCKER_LOG"; then
+    echo 'The slim build received Previewer or Wine arguments' >&2
+    exit 1
+fi
+grep -Fxq 'slim' "$DOCKER_LOG"
+grep -Fxq 'calibre-with-kfx:slim-local' "$DOCKER_LOG"
+VARIANT=slim mise run --quiet --output=interleave test > "$work/slim-test.log"
+grep -Fxq 'calibre-with-kfx:slim-local' "$DOCKER_LOG"
+grep -Fxq 'slim' "$DOCKER_LOG"
+before=$(sha256sum "$DOCKER_LOG")
+for task in versions build test; do
+    if VARIANT=invalid mise run --quiet --output=interleave "$task" >/dev/null 2>&1; then
+        echo "An invalid variant was accepted by $task" >&2
+        exit 1
+    fi
+done
+[[ "$before" == "$(sha256sum "$DOCKER_LOG")" ]]
 test ! -e "$HEAD_LOG"
 
 perl -MIO::Socket::INET -e '

@@ -8,9 +8,16 @@ on:
   workflow_dispatch:
     inputs:
       tags:
-        description: 'Image Tag'
+        description: 'Image tag (include -slim for dated slim images)'
         required: true
         type: string
+      variant:
+        description: 'Image variant'
+        type: choice
+        options:
+          - full
+          - slim
+        default: full
 
 permissions:
   contents: read
@@ -29,6 +36,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         env:
           IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.tags }}
+          VARIANT: ${{ inputs.variant }}
         run: |
           docker pull "$IMAGE"
           mise run test

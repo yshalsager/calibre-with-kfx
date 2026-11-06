@@ -30,6 +30,17 @@ You can [build the locked image locally](#building-and-testing), or pull it from
 docker pull yshalsager/calibre-with-kfx
 ```
 
+### Image variants
+
+| Tags | Default KFX backend | Contents |
+| --- | --- | --- |
+| `latest`, `full`, `<version>` | `previewer` | Complete Calibre payload, all three KFX plugins, Wine and KP4 |
+| `slim`, `<version>-slim` | `kfxgen` | Headless Calibre and all three KFX plugins, without Wine/KP4 or speech synthesis |
+
+The slim image retains PDF conversion, fonts, Unicode support, dictionaries and hyphenation. It uses only the GLVND loader libraries needed by headless Qt, not the Mesa/LLVM driver stack. It keeps English and Arabic Chromium UI locales; this does not restrict book languages. It is not a desktop/GPU image and cannot use the Previewer backend.
+
+**Downstream applications must provide their own standalone Python.** Both variants retain Calibre's embedded Python, but no longer provide an application interpreter as part of their base-image contract. For `ebook-converter-bot`, copy a pinned official Python runtime from the same Debian trixie release before running its frozen uv sync. The bot also selects its own backends: changing the base image's `KFX_BACKEND` does not disable its Previewer routes.
+
 Once you have the Docker image, you can run it using the following command:
 
 ```bash
@@ -41,13 +52,14 @@ docker run --rm -it -v "/path/to/local/folder:/app:rw" yshalsager/calibre-with-k
 - Convert to azw3 with extra arguments: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx epub30-spec.epub epub30-spec.azw3 --dont-compress`
 - Convert to KFX: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx epub30-spec.epub epub30-spec.kfx`
 - Convert to KFX with approximate page numbers (auto): `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx book.epub book.kfx --pages 0`
+- Convert natively with the slim image: `docker run --rm -it -v "$(pwd):/app:rw" yshalsager/calibre-with-kfx:slim book.epub book.kfx --kfxgen-open-at-cover`
 
 ### KFX backends
 
 `KFX_BACKEND` selects the backend when the output is KFX:
 
-- `previewer` (default): KFX Output via Kindle Previewer under Wine; preserves existing behavior.
-- `kfxgen`: native generation via `ebook-convert`, without starting Wine or Xvfb.
+- `previewer` (full image default): KFX Output via Kindle Previewer under Wine; preserves existing conversion behavior.
+- `kfxgen` (slim image default): native generation via `ebook-convert`, without starting Wine or Xvfb. Also available in the full image.
 
 ```bash
 docker run --rm -it -v "$(pwd):/app:rw" -e KFX_BACKEND=kfxgen yshalsager/calibre-with-kfx \
@@ -73,9 +85,9 @@ For `kfxgen`, extra args are `ebook-convert` options, including:
 - `--kfxgen-embed-original-images` preserve original image resolution
 - `--kfxgen-disable-native-tables` write tables as paragraphs
 
-kfxgen does not accept Previewer's `--pages`, `--book`, or `--asin` flags. This image builds it from pinned commit [`c50f414`](https://github.com/jloutsch/kfxgen/commit/c50f414197a4a236ebe4a654a3b2b3b7067a25ee), including RTL fixes not yet released in 5.23.0. Its output can still differ in formatting, so Previewer remains the default.
+kfxgen does not accept Previewer's `--pages`, `--book`, or `--asin` flags. This image builds it from pinned commit [`c50f414`](https://github.com/jloutsch/kfxgen/commit/c50f414197a4a236ebe4a654a3b2b3b7067a25ee), including RTL fixes not yet released in 5.23.0. Its output can still differ in formatting, so Previewer remains the full image's default.
 
-Both plugins stay installed. KFX Output is disabled for automatic format selection, so direct `ebook-convert book.epub book.kfx` uses kfxgen. Its explicit `calibre-debug -r "KFX Output" -- ...` command still uses Previewer.
+Both plugins stay installed in both variants. KFX Output is disabled for automatic format selection, so direct `ebook-convert book.epub book.kfx` uses kfxgen. In the full image, its explicit `calibre-debug -r "KFX Output" -- ...` command still uses Previewer. Keeping the plugin in slim does not provide a Previewer runtime.
 
 When converting from KFX to other formats, this image uses `ebook-convert` normally. Any `ebook-convert` CLI options can be passed as extra args.
 
@@ -103,17 +115,24 @@ Requires Docker and [mise](https://mise.jdx.dev/) 2026.11.0 or newer. The offlin
 
 ```sh
 mise trust mise.toml
-mise run versions       # inspect the committed versions, without network discovery
-mise run build          # build calibre-with-kfx:local from the lockfile
-mise run test           # both KFX backends and non-KFX conversions; prints the temporary output directory
-mise run test-tracking  # offline metadata and checksum regression tests
+mise run versions       # inspect the committed full-image versions, without network discovery
+mise run build          # build target full as calibre-with-kfx:local
+mise run test           # full-image conversions; prints a fresh temporary output directory
+VARIANT=slim mise run versions
+VARIANT=slim mise run build  # build target slim as calibre-with-kfx:slim-local
+VARIANT=slim mise run test   # native conversions, RTL/PDF checks, and absence of Wine/standalone Python
+mise run test-tracking      # offline metadata, variant, and checksum regression tests
 ```
 
-Use `calibre-with-kfx:local` in the usage examples to run your local image. `mise run build` supplies the required locked build arguments. To test another image, run `IMAGE=ghcr.io/yshalsager/calibre-with-kfx:<tag> mise run test`, or dispatch the conversion-test workflow manually.
+Use `calibre-with-kfx:local` or `calibre-with-kfx:slim-local` in the usage examples to run a local image. `mise run build` supplies the required locked build arguments; a bare Docker build still needs them. The last/default Dockerfile target is `full`.
+
+To test another full image, run `IMAGE=ghcr.io/yshalsager/calibre-with-kfx:<tag> mise run test`. For slim, use `VARIANT=slim IMAGE=ghcr.io/yshalsager/calibre-with-kfx:<tag>-slim mise run test`. The manual conversion-test workflow also requires the matching variant; checks are explicit rather than silently skipping a missing full-image runtime.
+
+Calibre and plugin artifacts are prepared in shared builder stages. Slim never needs the Wine/KP4 build stages. Speech data and unused Chromium locales are removed before the slim payload is copied into its final stage, rather than deleted from a retained parent layer. Download/extraction tools and standalone Python are not needed in the conversion runtime.
 
 ## Versioning
 
-`mise.tracking.lock` records the versions, artifact URLs, and checksums used by Docker. Labels and [GitHub releases](https://github.com/yshalsager/calibre-with-kfx/releases) read the same lockfile. The base image remains pinned in `Dockerfile` and updated by Renovate.
+`mise.tracking.lock` records the versions, artifact URLs, and checksums used by Docker. Labels and [GitHub releases](https://github.com/yshalsager/calibre-with-kfx/releases) read the same lockfile, omitting Wine/KP4 for slim. Calibre versions are discovered through GitHub, but Linux artifacts come from the official versioned archive because GitHub removes older binaries. The Debian base image remains pinned in `Dockerfile` and updated by Renovate.
 
 Version discovery is isolated in `mise.tracking.toml`, so normal mise commands do not fetch upstream metadata. To update:
 
@@ -123,7 +142,11 @@ mise run update-versions
 git diff -- mise.tracking.lock
 ```
 
-The weekly workflow commits lockfile changes, triggering a build, conversion tests, and publication with a UTC `YYYYMMDD-HHMMSS` tag. Publication is serialized and pushes the tested image without rebuilding it or repeating conversions after publication. Only a build of the current `master` head updates `latest`; older reruns can publish their unique version tags without rolling `latest` backward.
+The weekly version workflow commits lockfile changes, triggering builds and conversion tests for both variants. The publish workflow also runs weekly to refresh signed apt dependencies, including copied graphics libraries, when tool versions have not changed. Publication is serialized; both images must pass before either is published, and the tested images are pushed without rebuilding.
+
+A release uses a UTC `YYYYMMDD-HHMMSS` tag for full and `<version>-slim` for slim. Only a build of the current `master` head updates the moving `latest`, `full`, and `slim` aliases; older reruns can publish dated tags without rolling those aliases backward.
+
+Slim's manually copied GLVND libraries come from the same Debian builder. Their license and installed package versions are recorded under `/usr/local/share/doc/libglvnd/`; include these files in security inventory rather than relying only on the runtime apt database. Other OS dependencies are also not individually locked.
 
 KP4 is tracked as `version+etag`: Amazon's release notes supply the advertised version, and a HEAD request detects Windows installer replacements. Amazon currently publishes only an MD5 for that installer; it is a content-change check, not strong authenticity verification. The build checks the extracted Windows package version against the advertised version and fails on a mismatch. Mutable vendor URLs can stop serving older locked artifacts.
 

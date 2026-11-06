@@ -25,7 +25,8 @@ wine = 'http:wine-staging'
 
 [tools.calibre]
 version = 'latest'
-asset_pattern = 'calibre-{{ version }}-x86_64.txz'
+# GitHub removes older release assets; the official archive retains them.
+platforms.linux-x64.url = 'https://download.calibre-ebook.com/{{ version }}/calibre-{{ version }}-x86_64.txz'
 
 [tools.kfx_input]
 version = 'latest'

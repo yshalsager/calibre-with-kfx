@@ -8,12 +8,19 @@ run = 'mise -E tracking lock --bump --platform linux-x64'
 
 [tasks.versions]
 run = '''
+{% set variant = env.VARIANT | default(value='full') %}
 {% set lock = read_toml(path='mise.tracking.lock') %}
-{% set base = read_file(path='Dockerfile') | split(pat='\n') | first | trim_start(pat='FROM ') %}
+{% set base = read_file(path='Dockerfile') | split(pat='\n') | first | trim_start(pat='FROM ') | split(pat=' ') | first %}
+case {{ variant | quote }} in
+    full|slim) ;;
+    *) echo 'VARIANT must be full or slim' >&2; exit 1 ;;
+esac
 {
 printf 'base: %s\n' {{ base | quote }}
 {% for name, entries in lock.tools %}
+{% if variant == 'full' or name not in ['kp4', 'wine'] %}
 printf '%s: %s\n' {{ name | quote }} {{ entries[0].version | quote }}
+{% endif %}
 {% endfor %}
 } | sort
 '''
@@ -22,30 +29,49 @@ printf '%s: %s\n' {{ name | quote }} {{ entries[0].version | quote }}
 shell = 'bash -c'
 run = '''
 set -euo pipefail
+{% set variant = env.VARIANT | default(value='full') %}
 {% set lock = read_toml(path='mise.tracking.lock') %}
+variant={{ variant | quote }}
+case "$variant" in
+    full|slim) ;;
+    *) echo 'VARIANT must be full or slim' >&2; exit 1 ;;
+esac
 args=(
 {% for name, entries in lock.tools %}
+{% if variant == 'full' or name not in ['kp4', 'wine'] %}
 {% set entry = entries[0] %}
 {% set artifact = entry['platforms.linux-x64'] %}
 {% set prefix = name | upper %}
     --build-arg {{ (prefix ~ '_VERSION=' ~ entry.version) | quote }}
     --build-arg {{ (prefix ~ '_URL=' ~ artifact.url) | quote }}
     --build-arg {{ (prefix ~ '_CHECKSUM=' ~ artifact.checksum) | quote }}
+{% endif %}
 {% endfor %}
 )
+image=calibre-with-kfx:local
+if [[ "$variant" == slim ]]; then image=calibre-with-kfx:slim-local; fi
 description=$(mise run --quiet --output=interleave versions | paste -sd ';' -)
-docker build --platform linux/amd64 "${args[@]}" --tag calibre-with-kfx:local \
+docker build --platform linux/amd64 --target "$variant" "${args[@]}" --tag "$image" \
     --label "org.opencontainers.image.description=Using $description" .
 '''
 
 [tasks.test]
 run = '''
+set -eu
+{% set variant = env.VARIANT | default(value='full') %}
+variant={{ variant | quote }}
+case "$variant" in
+    full|slim) ;;
+    *) echo 'VARIANT must be full or slim' >&2; exit 1 ;;
+esac
+image=calibre-with-kfx:local
+if [ "$variant" = slim ]; then image=calibre-with-kfx:slim-local; fi
 test_dir=$(mktemp -d)
 chmod 1777 "$test_dir"
 curl -fsSL https://github.com/IDPF/epub3-samples/releases/download/20170606/trees.epub -o "$test_dir/trees.epub"
 printf 'Conversion outputs: %s\n' "$test_dir"
 docker run --rm --platform linux/amd64 --network none -v "$test_dir:/app" -v "$PWD/test.sh:/app/test.sh:ro" \
-    --entrypoint bash "${IMAGE:-calibre-with-kfx:local}" -c './test.sh trees.epub'
+    -v "$PWD/tests:/app/tests:ro" --entrypoint bash "${IMAGE:-$image}" /app/test.sh /app/trees.epub "$variant"
 '''
 
 [tasks.test-tracking]

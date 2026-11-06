@@ -8,13 +8,12 @@ backend = "github:kovidgoyal/calibre"
 specifiers = ["latest"]
 
 [tools.calibre.options]
-asset_pattern = "calibre-{{ version }}-x86_64.txz"
+url = "https://download.calibre-ebook.com/{{ version }}/calibre-{{ version }}-x86_64.txz"
 
 [tools.calibre."platforms.linux-x64"]
 checksum = "sha256:953e4512a6482848cd803c88b6d942e6afca65dc3b67c7d1353ae048d616de53"
-checksum_source = "mise-versions"
-url = "https://github.com/kovidgoyal/calibre/releases/download/v9.17.0/calibre-9.17.0-x86_64.txz"
-url_api = "https://api.github.com/repos/kovidgoyal/calibre/releases/assets/667884975"
+url = "https://download.calibre-ebook.com/9.17.0/calibre-9.17.0-x86_64.txz"
+url_api = "https://download.calibre-ebook.com/9.17.0/calibre-9.17.0-x86_64.txz"
 
 [[tools.kfx_input]]
 version = "2.34.2"
