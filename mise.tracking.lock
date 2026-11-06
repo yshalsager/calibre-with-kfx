@@ -2,6 +2,20 @@
 
 lockfile_version = 3
 
+[[tools.boko]]
+version = "0.6.0"
+backend = "github:zacharydenton/boko"
+specifiers = ["latest"]
+
+[tools.boko.options]
+asset_pattern = "boko-x86_64-unknown-linux-gnu.tar.xz"
+
+[tools.boko."platforms.linux-x64"]
+checksum = "sha256:c461d82d46bb42809fe12b8bb8d45bce6b35f66af7e65abf512a6f7d5e6d8cd0"
+checksum_source = "mise-versions"
+url = "https://github.com/zacharydenton/boko/releases/download/v0.6.0/boko-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/zacharydenton/boko/releases/assets/708160824"
+
 [[tools.calibre]]
 version = "9.17.0"
 backend = "github:kovidgoyal/calibre"

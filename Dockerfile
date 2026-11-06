@@ -78,6 +78,17 @@ RUN download-locked "$KFXGEN_URL" "$KFXGEN_CHECKSUM" /tmp/kfxgen-source.zip \
     && calibre-debug -c 'import sys; from calibre.customize.ui import find_plugin, plugin_for_output_format; actual = ".".join(map(str, find_plugin("kfxgen").version)); sys.exit(0 if actual == sys.argv[1] and plugin_for_output_format("kfx").name == "kfxgen" else f"kfxgen installation or selection failed: {actual}")' "${KFXGEN_VERSION%%+*}" \
     && rm -rf /tmp/kfxgen /tmp/kfxgen-source.zip /tmp/kfxgen.zip
 
+USER root
+ARG BOKO_VERSION
+ARG BOKO_URL
+ARG BOKO_CHECKSUM
+RUN download-locked "$BOKO_URL" "$BOKO_CHECKSUM" /tmp/boko.tar.xz \
+    && mkdir -p /opt/boko \
+    && tar -xJf /tmp/boko.tar.xz -C /opt/boko --strip-components=1 \
+    && /opt/boko/boko --version | grep -Fx "boko $BOKO_VERSION" \
+    && printf 'Corresponding source: %s/source.tar.gz\n' "${BOKO_URL%/*}" > /opt/boko/SOURCE \
+    && rm /tmp/boko.tar.xz
+
 FROM build AS slim-build
 USER root
 RUN rm -rf /opt/calibre/share/espeak-ng-data /opt/calibre/lib/libonnxruntime.so.1 /opt/calibre/lib/libespeak-ng.so.1 \
@@ -105,6 +116,8 @@ FROM base AS slim
 LABEL org.opencontainers.image.description="Native Calibre/KFX conversion without Wine or Kindle Previewer" \
     org.opencontainers.image.variant="slim"
 COPY --from=slim-build /opt/calibre /opt/calibre
+COPY --from=build /opt/boko/boko /usr/local/bin/boko
+COPY --from=build /opt/boko/LICENSE /opt/boko/SOURCE /usr/local/share/doc/boko/
 COPY --from=build --chown=$USERNAME:$USERNAME /home/$USERNAME/.config/calibre /home/$USERNAME/.config/calibre
 # Qt needs GLVND loaders even headlessly, but not the Mesa/LLVM drivers.
 COPY --from=build /usr/lib/x86_64-linux-gnu/libEGL.so.1* /usr/lib/x86_64-linux-gnu/libGLX.so.0* /usr/lib/x86_64-linux-gnu/libOpenGL.so.0* /usr/lib/x86_64-linux-gnu/libGLdispatch.so.0* /usr/local/lib/
@@ -129,6 +142,8 @@ RUN dpkg --add-architecture i386 \
     && rm /tmp/winehq-staging.deb \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /opt/calibre /opt/calibre
+COPY --from=build /opt/boko/boko /usr/local/bin/boko
+COPY --from=build /opt/boko/LICENSE /opt/boko/SOURCE /usr/local/share/doc/boko/
 COPY --from=build --chown=$USERNAME:$USERNAME /home/$USERNAME/.config/calibre /home/$USERNAME/.config/calibre
 COPY --from=full-build /opt/kp4 /opt/kp4
 RUN /opt/calibre/calibre_postinstall

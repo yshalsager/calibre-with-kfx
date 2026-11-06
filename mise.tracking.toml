@@ -16,12 +16,17 @@ END {
 `) }}'''
 
 [tool_alias]
+boko = 'github:zacharydenton/boko'
 calibre = 'github:kovidgoyal/calibre'
 kfx_input = 'http:kfx-input'
 kfx_output = 'http:kfx-output'
 kfxgen = 'http:kfxgen'
 kp4 = 'http:kindle-previewer'
 wine = 'http:wine-staging'
+
+[tools.boko]
+version = 'latest'
+asset_pattern = 'boko-x86_64-unknown-linux-gnu.tar.xz'
 
 [tools.calibre]
 version = 'latest'

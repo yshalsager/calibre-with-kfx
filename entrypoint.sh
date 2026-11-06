@@ -13,7 +13,7 @@ export XDG_RUNTIME_DIR
 function print_usage {
     echo "Usage: $0 [INPUT_FILE] [OUTPUT_FILE] [OPTIONS]"
     echo "Converts an ebook to a different format using Calibre."
-    echo "KFX_BACKEND=previewer|kfxgen selects the KFX backend (default: ${KFX_BACKEND:-previewer})."
+    echo "KFX_BACKEND=previewer|kfxgen|boko selects the KFX backend (default: ${KFX_BACKEND:-previewer})."
 }
 
 while getopts ":h" opt; do
@@ -74,7 +74,7 @@ function convert_file {
         case "${KFX_BACKEND:-previewer}" in
             previewer)
                 if ! command -v wine >/dev/null; then
-                    echo 'Previewer is unavailable in this image; use the full image or KFX_BACKEND=kfxgen.' >&2
+                    echo 'Previewer is unavailable in this image; use the full image, KFX_BACKEND=kfxgen, or KFX_BACKEND=boko.' >&2
                     return 1
                 fi
                 run_with_xvfb calibre-debug -r "KFX Output" -- "$input_file" "$output_file" "$@"
@@ -82,8 +82,11 @@ function convert_file {
             kfxgen)
                 ebook-convert "$input_file" "$output_file" "$@"
                 ;;
+            boko)
+                boko convert "$input_file" "$output_file" "$@"
+                ;;
             *)
-                echo "Invalid KFX_BACKEND: $KFX_BACKEND (expected previewer or kfxgen)" >&2
+                echo "Invalid KFX_BACKEND: $KFX_BACKEND (expected previewer, kfxgen, or boko)" >&2
                 return 1
                 ;;
         esac

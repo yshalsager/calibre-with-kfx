@@ -20,7 +20,7 @@ A Docker image for converting eBooks using Calibre with KFX support.
 
 [Calibre](https://calibre-ebook.com/)'s [KFX Output](https://www.mobileread.com/forums/showthread.php?t=272407) plugin requires Amazon's [Kindle Previewer 4](https://kdp.amazon.com/en_US/help/topic/G202131170), which isn't available on Linux. This image runs it using [Wine](https://appdb.winehq.org/objectManager.php?sClass=application&iId=18012).
 
-It also includes [kfxgen](https://github.com/jloutsch/kfxgen) for native KFX generation without Previewer or Wine, and [KFX Input](https://www.mobileread.com/forums/showthread.php?t=291290) for converting KFX to other formats.
+It also includes [kfxgen](https://github.com/jloutsch/kfxgen) and [Boko](https://github.com/zacharydenton/boko) for native KFX generation without Previewer or Wine, and [KFX Input](https://www.mobileread.com/forums/showthread.php?t=291290) for converting KFX to other formats.
 
 ## Usage
 
@@ -34,8 +34,8 @@ docker pull yshalsager/calibre-with-kfx
 
 | Tags | Default KFX backend | Contents |
 | --- | --- | --- |
-| `latest`, `full`, `<version>` | `previewer` | Complete Calibre payload, all three KFX plugins, Wine and KP4 |
-| `slim`, `<version>-slim` | `kfxgen` | Headless Calibre and all three KFX plugins, without Wine/KP4 or speech synthesis |
+| `latest`, `full`, `<version>` | `previewer` | Complete Calibre payload, all three KFX plugins, Boko, Wine and KP4 |
+| `slim`, `<version>-slim` | `kfxgen` | Headless Calibre, all three KFX plugins and Boko, without Wine/KP4 or speech synthesis |
 
 The slim image retains PDF conversion, fonts, Unicode support, dictionaries and hyphenation. It uses only the GLVND loader libraries needed by headless Qt, not the Mesa/LLVM driver stack. It keeps English and Arabic Chromium UI locales; this does not restrict book languages. It is not a desktop/GPU image and cannot use the Previewer backend.
 
@@ -60,6 +60,7 @@ docker run --rm -it -v "/path/to/local/folder:/app:rw" yshalsager/calibre-with-k
 
 - `previewer` (full image default): KFX Output via Kindle Previewer under Wine; preserves existing conversion behavior.
 - `kfxgen` (slim image default): native generation via `ebook-convert`, without starting Wine or Xvfb. Also available in the full image.
+- `boko` (opt-in, both images): native generation via `boko convert`, without starting Wine or Xvfb. Accepts EPUB, KFX, AZW3 and MOBI input only; unsupported formats are rejected rather than preconverted.
 
 ```bash
 docker run --rm -it -v "$(pwd):/app:rw" -e KFX_BACKEND=kfxgen yshalsager/calibre-with-kfx \
@@ -86,6 +87,24 @@ For `kfxgen`, extra args are `ebook-convert` options, including:
 - `--kfxgen-disable-native-tables` write tables as paragraphs
 
 kfxgen does not accept Previewer's `--pages`, `--book`, or `--asin` flags. This image builds it from pinned commit [`c50f414`](https://github.com/jloutsch/kfxgen/commit/c50f414197a4a236ebe4a654a3b2b3b7067a25ee), including RTL fixes not yet released in 5.23.0. Its output can still differ in formatting, so Previewer remains the full image's default.
+
+For `boko`, extra args are Boko options, not Calibre or Previewer options. `--optimize` shrinks images for Kindle; `--quiet` suppresses progress messages. Approximate page numbers are generated automatically and KFX is marked EBOK. Previewer's `--pages`, `--book`, `--asin`, `--logs`, `--quality` and `--timeout` are not supported.
+
+```bash
+docker run --rm -v "$(pwd):/app:rw" -e KFX_BACKEND=boko yshalsager/calibre-with-kfx:slim \
+  book.epub book.kfx
+```
+
+Boko's full CLI is also available independently of `KFX_BACKEND`, including KFX conversion to EPUB, AZW3, Markdown or text:
+
+```bash
+docker run --rm -v "$(pwd):/app:rw" --entrypoint boko yshalsager/calibre-with-kfx:slim \
+  convert book.kfx book.epub
+```
+
+Boko 0.6.0 can produce invalid KFX when re-encoding image-bearing KFX input. Prefer the original EPUB for KFX generation; KFX-to-EPUB extraction is tested separately. There is no automatic fallback or repair.
+
+The native engines can differ from Previewer in formatting. Boko's visual rendering on Kindle is not verified by these conversion tests.
 
 Both plugins stay installed in both variants. KFX Output is disabled for automatic format selection, so direct `ebook-convert book.epub book.kfx` uses kfxgen. In the full image, its explicit `calibre-debug -r "KFX Output" -- ...` command still uses Previewer. Keeping the plugin in slim does not provide a Previewer runtime.
 
@@ -151,5 +170,7 @@ Slim's manually copied GLVND libraries come from the same Debian builder. Their 
 KP4 is tracked as `version+etag`: Amazon's release notes supply the advertised version, and a HEAD request detects Windows installer replacements. Amazon currently publishes only an MD5 for that installer; it is a content-change check, not strong authenticity verification. The build checks the extracted Windows package version against the advertised version and fails on a mismatch. Mutable vendor URLs can stop serving older locked artifacts.
 
 kfxgen is temporarily pinned as `version+commit` to include unreleased RTL fixes. Its source archive is checksum-verified, then packaged as a Calibre plugin during the build, including upstream license notices. Return to release tracking once those fixes ship.
+
+Boko's Linux amd64 release archive is checksum-verified and its version checked during the shared build, then copied into both variants. Boko is GPL-3.0-or-later; its license is included at `/usr/local/share/doc/boko/LICENSE`. Corresponding source is available as `source.tar.gz` in the [matching upstream release](https://github.com/zacharydenton/boko/releases); `/usr/local/share/doc/boko/SOURCE` records the exact source URL for the shipped version.
 
 KFX Output stays pinned at 2.22.0 while `patches/kfx-output-linux-kp4.patch` provides Linux KP4 support. Review the patch and conversion tests before changing that pin. Wine tracking pins the staging metapackage for Debian trixie, whose exact-version dependencies pin the amd64/i386 Wine packages. Apt verifies those dependencies against its signed repository metadata; their hashes and other OS dependencies are not individually recorded in the mise lockfile.

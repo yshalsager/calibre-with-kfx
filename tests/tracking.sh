@@ -36,6 +36,7 @@ while IFS='|' read -r name version; do
         "$prefix" "$version" "$prefix" "$prefix" "$prefix" "$checksum" >> "$work/expected-args"
     printf '%s: %s\n' "$name" "$version" >> "$work/expected-versions"
 done <<'FIXTURES'
+boko|0.6.0
 calibre|9.1.2
 kfx_input|2.3.4
 kfx_output|2.22.0
@@ -75,7 +76,7 @@ diff -u "$work/expected-versions" "$work/versions"
 mise run --quiet --output=interleave versions > "$work/versions-again"
 cmp "$work/versions" "$work/versions-again"
 mise run --quiet --output=interleave build
-[[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 18 ]]
+[[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 21 ]]
 while IFS= read -r argument; do grep -Fxq -- "$argument" "$DOCKER_LOG"; done < "$work/expected-args"
 grep -Fxq 'linux/amd64' "$DOCKER_LOG"
 grep -Fxq 'full' "$DOCKER_LOG"
@@ -88,7 +89,7 @@ VARIANT=slim mise run --quiet --output=interleave versions > "$work/slim-version
 grep -Ev '^(kp4|wine): ' "$work/expected-versions" > "$work/expected-slim-versions"
 diff -u "$work/expected-slim-versions" "$work/slim-versions"
 VARIANT=slim mise run --quiet --output=interleave build
-[[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 12 ]]
+[[ $(grep -c '^--build-arg$' "$DOCKER_LOG") == 15 ]]
 while IFS= read -r argument; do
     case "$argument" in KP4_*|WINE_*) continue ;; esac
     grep -Fxq -- "$argument" "$DOCKER_LOG"
