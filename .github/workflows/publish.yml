@@ -27,7 +27,7 @@ concurrency:
 jobs:
   push_to_registry:
     name: Build, test, and publish
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       packages: write
       contents: write
