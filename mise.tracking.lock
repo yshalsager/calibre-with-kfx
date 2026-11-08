@@ -17,7 +17,7 @@ url = "https://github.com/zacharydenton/boko/releases/download/v0.6.0/boko-x86_6
 url_api = "https://api.github.com/repos/zacharydenton/boko/releases/assets/708160824"
 
 [[tools.calibre]]
-version = "9.17.0"
+version = "9.18.0"
 backend = "github:kovidgoyal/calibre"
 specifiers = ["latest"]
 
@@ -25,9 +25,9 @@ specifiers = ["latest"]
 url = "https://download.calibre-ebook.com/{{ version }}/calibre-{{ version }}-x86_64.txz"
 
 [tools.calibre."platforms.linux-x64"]
-checksum = "sha256:953e4512a6482848cd803c88b6d942e6afca65dc3b67c7d1353ae048d616de53"
-url = "https://download.calibre-ebook.com/9.17.0/calibre-9.17.0-x86_64.txz"
-url_api = "https://download.calibre-ebook.com/9.17.0/calibre-9.17.0-x86_64.txz"
+checksum = "sha256:da638166fb3dd204be77cf0f871a40d803536b3e5948969c5233b8e4f1e1dbe6"
+url = "https://download.calibre-ebook.com/9.18.0/calibre-9.18.0-x86_64.txz"
+url_api = "https://download.calibre-ebook.com/9.18.0/calibre-9.18.0-x86_64.txz"
 
 [[tools.kfx_input]]
 version = "2.34.2"
