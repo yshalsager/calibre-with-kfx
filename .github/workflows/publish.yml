@@ -40,6 +40,10 @@ jobs:
           version: '2026.11.0'
           install: false
 
+      # The runner's Docker 29.4.2 blocks Wine's 32-bit socketcall; fixed in 29.4.3.
+      - name: Set up Docker
+        uses: docker/setup-docker-action@3f1ab1ab0e29231562e4db4ca600c1a49653bac6 # v5
+
       - name: Log in to Docker Hub
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
