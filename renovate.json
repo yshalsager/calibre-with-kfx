@@ -19,6 +19,12 @@
   },
   "packageRules": [
     {
+      "description": "Keep CI on Ubuntu 24.04 for Wine compatibility",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["ubuntu"],
+      "allowedVersions": "/^24\\.04$/"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true,
       "minimumReleaseAge": "3 days"
