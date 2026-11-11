@@ -48,16 +48,18 @@ checksum = "sha256:8202c723487be06a9461c2eb1c91984076c71935766303e65ae48933c2efb
 url = "https://plugins.calibre-ebook.com/272407.zip"
 
 [[tools.kfxgen]]
-version = "5.23.0+c50f414197a4a236ebe4a654a3b2b3b7067a25ee"
-backend = "http:kfxgen"
-specifiers = ["5.23.0+c50f414197a4a236ebe4a654a3b2b3b7067a25ee"]
+version = "5.24.0"
+backend = "github:jloutsch/kfxgen"
+specifiers = ["latest"]
 
 [tools.kfxgen.options]
-format = "raw"
+asset_pattern = "kfxgen-plugin-*.zip"
 
 [tools.kfxgen."platforms.linux-x64"]
-checksum = "sha256:6de7a7b125a2b83b0433d72bde37d705ec04b007a12f0d13f11d9fe47393ba2f"
-url = "https://codeload.github.com/jloutsch/kfxgen/zip/c50f414197a4a236ebe4a654a3b2b3b7067a25ee"
+checksum = "sha256:d3af9398c8984f6afdd7c8623c2713fb2009ab4af7afd59be045ab2eed9aa5fa"
+checksum_source = "mise-versions"
+url = "https://github.com/jloutsch/kfxgen/releases/download/v5.24.0/kfxgen-plugin-5.24.0.zip"
+url_api = "https://api.github.com/repos/jloutsch/kfxgen/releases/assets/733855109"
 
 [[tools.kp4]]
 version = "4.0.4+cb6d5d024aa3d870e1154f0847b158cc"

@@ -87,7 +87,7 @@ For `kfxgen`, extra args are `ebook-convert` options, including:
 - `--kfxgen-embed-original-images` preserve original image resolution
 - `--kfxgen-disable-native-tables` write tables as paragraphs
 
-kfxgen does not accept Previewer's `--pages`, `--book`, or `--asin` flags. This image builds it from pinned commit [`c50f414`](https://github.com/jloutsch/kfxgen/commit/c50f414197a4a236ebe4a654a3b2b3b7067a25ee), including RTL fixes not yet released in 5.23.0. Its output can still differ in formatting, so Previewer remains the full image's default.
+kfxgen does not accept Previewer's `--pages`, `--book`, or `--asin` flags.
 
 For `boko`, extra args are Boko options, not Calibre or Previewer options. `--optimize` shrinks images for Kindle; `--quiet` suppresses progress messages. Approximate page numbers are generated automatically and KFX is marked EBOK. Previewer's `--pages`, `--book`, `--asin`, `--logs`, `--quality` and `--timeout` are not supported.
 
@@ -107,7 +107,7 @@ Boko 0.6.0 can produce invalid KFX when re-encoding image-bearing KFX input. Pre
 
 The native engines can differ from Previewer in formatting. Boko's visual rendering on Kindle is not verified by these conversion tests.
 
-Both plugins stay installed in both variants. KFX Output is disabled for automatic format selection, so direct `ebook-convert book.epub book.kfx` uses kfxgen. In the full image, its explicit `calibre-debug -r "KFX Output" -- ...` command still uses Previewer. Keeping the plugin in slim does not provide a Previewer runtime.
+KFX Output is disabled for automatic format selection, so direct `ebook-convert book.epub book.kfx` uses kfxgen. Explicit Previewer conversion via `calibre-debug -r "KFX Output" -- ...` requires the full image.
 
 When converting from KFX to other formats, this image uses `ebook-convert` normally. Any `ebook-convert` CLI options can be passed as extra args.
 
@@ -169,8 +169,6 @@ A release uses a UTC `YYYYMMDD-HHMMSS` tag for full and `<version>-slim` for sli
 Slim's manually copied GLVND libraries come from the same Debian builder. Their license and installed package versions are recorded under `/usr/local/share/doc/libglvnd/`; include these files in security inventory rather than relying only on the runtime apt database. Other OS dependencies are also not individually locked.
 
 KP4 is tracked as `version+etag`: Amazon's release notes supply the advertised version, and a HEAD request detects Windows installer replacements. Amazon currently publishes only an MD5 for that installer; it is a content-change check, not strong authenticity verification. The build checks the extracted Windows package version against the advertised version and fails on a mismatch. Mutable vendor URLs can stop serving older locked artifacts.
-
-kfxgen is temporarily pinned as `version+commit` to include unreleased RTL fixes. Its source archive is checksum-verified, then packaged as a Calibre plugin during the build, including upstream license notices. Return to release tracking once those fixes ship.
 
 Boko's Linux amd64 release archive is checksum-verified and its version checked during the shared build, then copied into both variants. Boko is GPL-3.0-or-later; its license is included at `/usr/local/share/doc/boko/LICENSE`. Corresponding source is available as `source.tar.gz` in the [matching upstream release](https://github.com/zacharydenton/boko/releases); `/usr/local/share/doc/boko/SOURCE` records the exact source URL for the shipped version.
 

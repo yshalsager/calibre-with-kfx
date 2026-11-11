@@ -40,7 +40,7 @@ boko|0.6.0
 calibre|9.1.2
 kfx_input|2.3.4
 kfx_output|2.22.0
-kfxgen|5.23.0+c50f414197a4a236ebe4a654a3b2b3b7067a25ee
+kfxgen|5.24.0
 kp4|4.0.4+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 wine|11.1~trixie-1
 FIXTURES
