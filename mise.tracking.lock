@@ -74,7 +74,7 @@ checksum = "md5:cb6d5d024aa3d870e1154f0847b158cc"
 url = "https://d3mb67z9ki82yk.cloudfront.net/KindlePreviewerSetup.exe"
 
 [[tools.wine]]
-version = "11.21~trixie-1"
+version = "11.22~trixie-1"
 backend = "http:wine-staging"
 specifiers = ["latest"]
 
@@ -82,5 +82,5 @@ specifiers = ["latest"]
 format = "raw"
 
 [tools.wine."platforms.linux-x64"]
-checksum = "sha256:04a9e9030f4090e26931cc3ab2f0e10f597a40bffc66746afe3802a542aa91c7"
-url = "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine-staging/winehq-staging_11.21~trixie-1_amd64.deb"
+checksum = "sha256:06fe8a75fef4b695c8324c4c8f4051dc51643c39257f814e34c9c1bf575bbab9"
+url = "https://dl.winehq.org/wine-builds/debian/pool/main/w/wine-staging/winehq-staging_11.22~trixie-1_amd64.deb"
