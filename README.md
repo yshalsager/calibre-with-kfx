@@ -162,7 +162,7 @@ mise run update-versions
 git diff -- mise.tracking.lock
 ```
 
-The weekly version workflow commits lockfile changes, triggering builds and conversion tests for both variants. The publish workflow also runs weekly to refresh signed apt dependencies, including copied graphics libraries, when tool versions have not changed. Publication is serialized; both images must pass before either is published, and the tested images are pushed without rebuilding.
+The weekly version workflow commits lockfile updates; matching pushes build, test, and publish both image variants without creating GitHub releases. Git tags and GitHub releases are created only by weekly scheduled or manual runs. Weekly builds also refresh signed apt dependencies, including copied graphics libraries, when tool versions have not changed. Publication is serialized; both images must pass before either is published, and the tested images are pushed without rebuilding.
 
 A release uses a UTC `YYYYMMDD-HHMMSS` tag for full and `<version>-slim` for slim. Only a build of the current `master` head updates the moving `latest`, `full`, and `slim` aliases; older reruns can publish dated tags without rolling those aliases backward.
 
